@@ -6,7 +6,7 @@ use Data::Dumper;
 my $handbrake = '/usr/local/bin/HandBrakeCLI';
 my $preset = 'AppleTV';
 my $itunes = '/Volumes/Media/iTunes/iTunes Media/Automatically Add to iTunes/';
-my $tvtag = '/Users/caleb/Documents/bin/tvtag-sickbeard.pl';
+my $tvtag = '/usr/local/bin/tvtag-sickbeard.pl';
 
 my @files = find(
 	file =>
