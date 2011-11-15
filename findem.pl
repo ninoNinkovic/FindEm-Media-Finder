@@ -10,11 +10,11 @@ use Cwd;
 
 my $config = "$ENV{HOME}/.findem/config";
 
-if ($#ARGV != 0) {
-	print "\nUsage: ./findem.pl <dirs> \n";
-	print "\t<dirs> can be multiple space delimited directories\n\n";
-	exit;
-}
+###if ($#ARGV == 0) {
+###	print "\nUsage: ./findem.pl <dirs> \n";
+###	print "\t<dirs> can be multiple space delimited directories\n\n";
+###	exit;
+###}
 
 #######################################################################################
 # READ IN CONFIG FILE FROM ~/.findem/config
@@ -36,14 +36,14 @@ if ( -e "$ENV{HOME}/.findem") {
 #######################################################################################
 my @files = find(
 	file =>
-	name => [qw/ *.mkv *.avi *.mov / ],
+	name => [qw/ *.mkv *.avi *.mov *.ts / ],
 	in => \@ARGV
 	);
 
-if (@files == 0) {
-	print "Found nothing to convert.\n";
-	exit;
-} else {
+###if (@files == 0) {
+###	print "Found nothing to convert.\n";
+###	exit;
+###} else {
 
 my $list = join("\n",@files," ");
 print "\nFound the following files to convert:\n\n$list\n";
@@ -59,7 +59,7 @@ foreach my $infile (@files) {
     # escape spaces
     # $infile =~ s[ ][\\ ]g;
     my $outfile = $infile;
-    $outfile =~ s/\.(?:mkv|avi)\z/\.m4v/;
+    $outfile =~ s/\.(?:mkv|avi|mov|ts)\z/\.m4v/;
 	my $base_in = basename "$infile";
 	my $base_out = basename "$outfile";
 	sleep (2);
@@ -77,7 +77,6 @@ foreach my $infile (@files) {
 		sleep (2);
 		move ($outfile,$ripped) or die "Move of Movie file failed: $!";
 		move ($infile,$archive) or die "Move of Original Movie file failed: $!";
-		exit;
 	}else{
 	print "Executing '$tvtag' '$outfile' \n";
 	sleep (2);
@@ -89,14 +88,13 @@ foreach my $infile (@files) {
 	move ($infile,$archive) or die "Copy failed: $!";
 	sleep (5);
 	move ("$itunes_tmp/$base_out",$itunes) or die "Move failed: $!";
-	exit;
 	}
 	
  	#print Dumper(get_mp4info($outfile));
 }
 
 #######################################################################################
-}
+#}
 #######################################################################################
 # Define the Config file
 #######################################################################################
