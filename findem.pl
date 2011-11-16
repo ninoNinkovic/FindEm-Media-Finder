@@ -7,14 +7,16 @@ use File::Path;
 use Data::Dumper;
 use File::Basename;
 use Cwd;
+use Term::ANSIScreen qw/:color /;
 
 my $config = "$ENV{HOME}/.findem/config";
-
-###if ($#ARGV == 0) {
-###	print "\nUsage: ./findem.pl <dirs> \n";
-###	print "\t<dirs> can be multiple space delimited directories\n\n";
-###	exit;
-###}
+print colored ['blue'], "Welcome to the greatest script in the world!\n";
+if (@ARGV == 0) {
+	print colored ['red'], "\nUsage: ";
+	print "./findem.pl <dirs> \n";
+	print "\t<dirs> can be multiple space delimited directories\n\n";
+	exit;
+}
 
 #######################################################################################
 # READ IN CONFIG FILE FROM ~/.findem/config
@@ -40,13 +42,13 @@ my @files = find(
 	in => \@ARGV
 	);
 
-###if (@files == 0) {
-###	print "Found nothing to convert.\n";
-###	exit;
-###} else {
+if (@files == 0) {
+	print colored ['green'], "Found nothing to convert.\n";
+	exit;
+} else {
 
 my $list = join("\n",@files," ");
-print "\nFound the following files to convert:\n\n$list\n";
+print colored ['green'], "\nFound the following files to convert:\n\n$list\n";
 
 #######################################################################################
 
@@ -55,7 +57,7 @@ print "\nFound the following files to convert:\n\n$list\n";
 #######################################################################################
 
 foreach my $infile (@files) {
-    print $infile . "\n";
+    print colored ['red'], $infile . "\n";
     # escape spaces
     # $infile =~ s[ ][\\ ]g;
     my $outfile = $infile;
@@ -73,17 +75,17 @@ foreach my $infile (@files) {
 #######################################################################################
 
 	if ($outfile =~ m/\(\d{4}\).m4v\z/){
-		print "Moving and Copying files around... \n\n";
+		print colored ['blue'], "Moving and Copying files around... \n\n";
 		sleep (2);
 		move ($outfile,$ripped) or die "Move of Movie file failed: $!";
 		move ($infile,$archive) or die "Move of Original Movie file failed: $!";
 	}else{
-	print "Executing '$tvtag' '$outfile' \n";
+	print colored ['blue'], "Executing '$tvtag' '$outfile' \n";
 	sleep (2);
 	system "'$tvtag' '$outfile'";
 	sleep (2);
 	
-	print "Moving and Copying files around... \n\n";
+	print colored ['blue'], "Moving and Copying files around... \n\n";
 	copy ($outfile,$itunes_tmp) or die "Move Failed: $!";
 	move ($infile,$archive) or die "Copy failed: $!";
 	sleep (5);
@@ -92,9 +94,9 @@ foreach my $infile (@files) {
 	
  	#print Dumper(get_mp4info($outfile));
 }
-
+print colored ['bold blue'], "Thank you, please come again! \n\n";
 #######################################################################################
-#}
+}
 #######################################################################################
 # Define the Config file
 #######################################################################################
