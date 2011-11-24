@@ -52,7 +52,7 @@ my $list = join("\n",@files," ");
 print colored ['green'], "\nFound the following files to convert:\n\n$list\n";
 
 #######################################################################################
-
+#$bc_email =~ s/@/\\@/;
 #######################################################################################
 # Loop through files found and convert to .m4v
 #######################################################################################
@@ -68,6 +68,9 @@ foreach my $infile (@files) {
 	sleep (2);
     system "$handbrake -i '$infile' -o '$outfile' --preset=$preset"; # without escaped spaces
     #system "$handbrake -i $infile' -o $outfile --preset=$preset"; # with escaped spaces
+	if ($bc_enabled eq '1'){
+		system "curl -d 'email=$bc_email' -d '&notification[from_screen_name]=Media+Procesor' -d '&notification[message]=$base_out has been Ripped.' http://boxcar.io/devices/providers/H04kjlc31sTQQE6vU7os/notifications";
+	}
 
 #######################################################################################
 
@@ -80,6 +83,9 @@ foreach my $infile (@files) {
 		sleep (2);
 		move ($outfile,$ripped) or die "Move of Movie file failed: $!";
 		move ($infile,$archive) or die "Move of Original Movie file failed: $!";
+		if ($bc_enabled eq '1'){
+			system "curl -d 'email=$bc_email' -d '&notification[from_screen_name]=Media+Procesor' -d '&notification[message]=$base_out has added to the Ripped Directory.' http://boxcar.io/devices/providers/H04kjlc31sTQQE6vU7os/notifications";
+		}
 	}else{
 	print colored ['blue'], "Executing '$tvtag' '$outfile' \n";
 	sleep (2);
@@ -91,6 +97,9 @@ foreach my $infile (@files) {
 	move ($infile,$archive) or die "Copy failed: $!";
 	sleep (5);
 	move ("$itunes_tmp/$base_out",$itunes) or die "Move failed: $!";
+		if ($bc_enabled eq '1'){
+			system "curl -d 'email=$bc_email' -d '&notification[from_screen_name]=Media+Procesor' -d '&notification[message]=$base_out has been added to iTunes.' http://boxcar.io/devices/providers/H04kjlc31sTQQE6vU7os/notifications";
+		}
 	}
 	
  	#print Dumper(get_mp4info($outfile));
@@ -156,7 +165,7 @@ sub define_config ($config) {
 		$ripped = '$ENV{HOME}/Movies/Ripped';
 	}
 	
-	print "Use Boxcar for notifications?: [Yes]/No: ";
+	print "Use Boxcar for notifications?: [Yes (default)/No]: ";
 	chomp ($bc_enabled = <STDIN>);
 	if (lc($bc_enabled) eq '') {
 		$bc_enabled = '1';
@@ -170,12 +179,12 @@ sub define_config ($config) {
 	}
 	
 	if ($bc_enabled eq '1') {
-		print "Boxcar Email: []: ";
+		print "Your Boxcar Email: []: ";
 		chomp ($bc_email = <STDIN>);
 		if (Email::Valid->address(-address => $bc_email,
 								  -tldcheck => 1,
 								  -mxcheck => 1)) {
-			#print "Boxcar email address is $bc_email.\n";
+			$bc_email =~ s/@/\\@/;
 			} else {
 				print "Boxcar will be disabled.\n";
 				$bc_enabled = '0';
