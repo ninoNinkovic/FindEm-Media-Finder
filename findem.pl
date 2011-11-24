@@ -7,6 +7,7 @@ use File::Path;
 use Data::Dumper;
 use File::Basename;
 use Cwd;
+use Email::Valid;
 use Term::ANSIScreen qw/:color /;
 
 my $config = "$ENV{HOME}/.findem/config";
@@ -155,6 +156,32 @@ sub define_config ($config) {
 		$ripped = '$ENV{HOME}/Movies/Ripped';
 	}
 	
+	print "Use Boxcar for notifications?: [Yes]/No: ";
+	chomp ($bc_enabled = <STDIN>);
+	if (lc($bc_enabled) eq '') {
+		$bc_enabled = '1';
+	} elsif (lc($bc_enabled) eq 'yes') {
+		$bc_enabled = '1';
+	} elsif (lc($bc_enabled) eq 'no') {
+		$bc_enabled = '0';
+	} else {
+		print "I'll enable Boxcar for you since you can't decide.\n";
+		$bc_enabled = '1';
+	}
+	
+	if ($bc_enabled eq '1') {
+		print "Boxcar Email: []: ";
+		chomp ($bc_email = <STDIN>);
+		if (Email::Valid->address(-address => $bc_email,
+								  -tldcheck => 1,
+								  -mxcheck => 1)) {
+			#print "Boxcar email address is $bc_email.\n";
+			} else {
+				print "Boxcar will be disabled.\n";
+				$bc_enabled = '0';
+			}
+	}
+	
    #####do {
    #####	print "Define Sickbeard directory: ";
    #####	chomp ($sickbeard = <STDIN>);
@@ -169,12 +196,20 @@ sub define_config ($config) {
 	print FILE "\$tvtag = \"$tvtag\"\;\n";
 	print FILE "\$archive = \"$archive\"\;\n";
 	print FILE "\$ripped = \"$ripped\"\;\n";
+	print FILE "\$bc_enabled = \"$bc_enabled\"\;\n";
+	if ($bc_enabled eq '1'){
+	print FILE "\$bc_email = \"$bc_email\"\;\n";
+	}
 	###print FILE "\$sickbeard = \"$sickbeard\"\;\n";
 	###print FILE "\$sickbearddb = \"$sickbeard/sickbeard.db\"\;\n";
 	
 	print "\n";
-	print "Your config file should be built now. Please run this script again.\n\n";
-	exit;
+	print "Your config file should be built now. Let's run this script again.\n\n";
+	sleep (3);
+	#exit;
 }
 
+sub box_car () {
+	
+}
 #######################################################################################
