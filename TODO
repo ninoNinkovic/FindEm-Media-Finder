@@ -2,3 +2,5 @@ TODO:
 
 -Fix screen color when script exits.
 -Add Tagging as optional
+-Add iTunes as optional
+-Make sure Ripped and archive directories exist
