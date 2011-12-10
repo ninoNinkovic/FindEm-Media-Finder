@@ -1,0 +1,67 @@
+#!/usr/bin/perl
+
+use Getopt::Long;
+use Fcntl ':flock'; 
+
+my $cmd = undef;
+my $silent_if_proc_older_than = undef;
+
+unless( GetOptions(
+		'cmd=s' => \$cmd,
+		'silent-until-seconds=i' => \$silent_if_proc_older_than,
+	)
+){
+	print "----- Cmd execution runtime lock wrapper ------\n";
+	print "Usage:\n";
+	print "$0\n";
+	print "\n";
+	print " --cmd=<cmd>\n";
+	print "Optional Parameters:\n";
+	print " --silent-until-seconds=num_of_seconds\n";
+ 	print "\n";
+	exit(1);
+}
+
+##
+## There is no need for this if we use /bin/sh with the system call. This must be disabled if we want to encapsulate commands requiring parameters with quotations.
+##
+#unless(-f $cmd ){
+#	print STDERR "ERROR : $cmd is not there.. Bailing!\n";
+#	exit;
+#}
+
+
+
+my $cmd_str = $cmd;
+$cmd_str =~ s/\//-/g;
+$cmd_str =~ s/[\s\t]/-/g;
+$cmd_str =~ s/\-+/\-/g;
+$lockfile_name = substr($cmd_str,0,200);
+
+my $filelock = "/tmp/runtime-lock-" . $lockfile_name;
+
+unless( open(F,">$filelock") ){
+ 	print STDERR "Couldn't open lockfile: $filelock: $!";	
+	exit(1);
+}
+
+unless( flock(F, LOCK_EX | LOCK_NB  ) ){
+	my $msg = '';
+	if (defined($silent_if_proc_older_than)) {
+		# get the PID of the process locking the file :
+		my $pid = `lsof|grep "$filelock"|sort|head -n 1|awk '{print \$2}'`;
+		$pid =~ s/[\s\t\r\n]//g;
+		my $f = '/proc/'.$pid;
+		my $pid_age = time() - (stat($f))[9];
+		exit if ($pid_age < $silent_if_proc_older_than);
+		$msg = ' (been running for '.$pid_age.' seconds, limit set to '.$silent_if_proc_older_than.')';
+	}
+	print STDERR "No lock for $cmd..\n";
+	print STDERR "Concurrent process running$msg!\n";
+	exit(1);	
+}
+
+
+system( "/bin/sh", "-c", "$cmd" );
+
+close(F);
