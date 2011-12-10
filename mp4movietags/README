@@ -1,0 +1,27 @@
+++++++++++  mp4movietags v0.6  ++++++++++
+works on Mac OS X Leopard & Snow Leopard
+
+thanks goes to:
+the MP4v2 team (http://code.google.com/p/mp4v2/) for their excellent mp4 container editing library
+the Subler team (http://code.google.com/p/subler/), their project was used as a template for MP4Tagger (source code soon to be released)
+dbr - http://github.com/dbr/themoviedb - for the API wrapper to TMDb
+
+To actually embed the information in the files, a commandline tagger called MP4Tagger is used. This is a tool based upon Subler, which uses the mp4v2 library. It's written in a mix of C, C++ and Objective-C. Source code will be released.
+
+This requires Python and a compiled version of MP4Tagger which must be placed in the same directory as the the mp4movietags files.
+
+Usage: mp4movietags.py [options] <path to moviefile>
+mp4movietags.py -h for full list of options
+
+Options:
+  -h, --help           show this help message and exit
+  -b, --batch          Selects first search result, requires no human
+                       intervention once launched
+  -i, --interactive    Interactively select correct movie from search results [default]
+  -d, --debug          Shows all debugging info
+  -v, --verbose        Will provide some feedback [default]
+  -q, --quiet          For ninja-like processing
+  -f, --force-tagging  Tags previously tagged files
+  -r, --remove-tags    Removes all tags
+  -t, --no-tagging     Disables tagging
+
