@@ -61,6 +61,7 @@ foreach my $infile (@files) {
     print colored ['red'], $infile . "\n";
     # escape spaces
     # $infile =~ s[ ][\\ ]g;
+	$infile =~ s/"\'"/"\\'"/;
     my $outfile = $infile;
     $outfile =~ s/\.(?:mkv|avi|mov|ts)\z/\.m4v/;
 	my $base_in = basename "$infile";
