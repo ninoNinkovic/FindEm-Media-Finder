@@ -64,6 +64,7 @@ foreach my $infile (@files) {
 	$infile =~ s/\'/\\'/g;
     my $outfile = $infile;
     $outfile =~ s/\.(?:mkv|avi|mov|ts)\z/\.m4v/;
+	$outfile =~ s/\'/\\'/g;
 	my $base_in = basename "$infile";
 	my $base_out = basename "$outfile";
 	sleep (2);
