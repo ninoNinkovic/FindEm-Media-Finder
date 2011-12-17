@@ -308,8 +308,7 @@ sub define_config ($config) {
 	print FILE "\$sickbearddb = \"$sickbeard/sickbeard.db\"\;\n";
 	
 	print "\n";
-	print "Your config file should be built now. Please run this script again.\n\n";
-	exit;
+	print "Your config file should be built now. Let\'s run this script again.\n\n";	
 }
 
 
