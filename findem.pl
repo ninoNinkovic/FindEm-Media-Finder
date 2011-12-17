@@ -60,15 +60,15 @@ print colored ['green'], "\nFound the following files to convert:\n\n$list\n";
 foreach my $infile (@files) {
     print colored ['red'], $infile . "\n";
     # escape spaces
-    $infile =~ s[ ][\\ ]g;
+    #$infile =~ s[ ][\\ ]g;
 	$infile =~ s/\'/\\'/;
     my $outfile = $infile;
     $outfile =~ s/\.(?:mkv|avi|mov|ts)\z/\.m4v/;
 	my $base_in = basename "$infile";
 	my $base_out = basename "$outfile";
 	sleep (2);
-    #system "$handbrake -i '$infile' -o '$outfile' --preset=$preset"; # without escaped spaces
-    system "$handbrake -i $infile' -o $outfile --preset=$preset"; # with escaped spaces
+    system ($handbrake -i '$infile' -o '$outfile' --preset=$preset); # without escaped spaces
+    #system "$handbrake -i $infile' -o $outfile --preset=$preset"; # with escaped spaces
 	if ($bc_enabled eq '1'){
 		system "curl -d 'email=$bc_email' -d '&notification[from_screen_name]=Media+Procesor' -d '&notification[message]=$base_out has been Ripped.' http://boxcar.io/devices/providers/H04kjlc31sTQQE6vU7os/notifications";
 	}
