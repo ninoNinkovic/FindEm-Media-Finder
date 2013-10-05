@@ -90,7 +90,7 @@ $Episode_Query = "SELECT * FROM tv_episodes WHERE showid=\"$tvdb_id\" AND season
 my $query_handle = $dbh->prepare($Episode_Query);
 $query_handle->execute();
 
-$query_handle->bind_columns(\my($Episode_ID,$SeriesID,$TVDBID,$EpisodeName,$null,$null,$Description,$AirDate1,$null,$null,$null,$null,$null,$null));
+$query_handle->bind_columns(\my($Episode_ID,$SeriesID,$TVDBID,$EpisodeName,$null,$null,$Description,$AirDate1,$null,$null,$null,$null));
 $query_handle->fetch();
 
 $query_handle->finish;
@@ -233,34 +233,6 @@ if ("$use" eq "subler") {
 	$command[18] = "--description \"$Description\"";
 	$command[19] = "--long_description \"$Description\"";
 	$command[20] = "--track_n \"$EpisodeNumber\"";
-} elsif ("$use" eq "ATOMIC") {
-	$command[0] = "$atomic";
-	$command[1] = "\"$file\""; 
-	$command[2] = "--TVShowName \"$show\""; 
-	$command[3] = "--stik \"$Type\"";
-	if ($BannerImage) {
-		$command[4] = "--artwork \"$BannerImage\"";
-	} else {
-		print "\n\n\tWARNING: THIS FILE WILL NOT CONTAIN ANY COVER ART, NO IMAGE FILE WAS FOUND!\n\n";
-		$command[4] = "";
-	}
-	#$command[5] = "--is_hd_video $HD";
-	$command[6] = "--TVEpisode \"$ProductionCode\"";
-	$command[7] = "--TVEpisodeNum \"$EpisodeNumber\"";
-	$command[8] = "--TVSeasonNum \"$SeasonNumber\"";
-	$command[9] = "--TVNetwork \"$TVNetwork\"";
-	$command[10] ="--title \"$EpisodeName\"";
-	$command[11] = "--genre \"$Genre\"";
-	$command[12] = "--year \"$AirDate\""; 
-	#$command[13] = "--contentRating \"$Rating\"";
-	$command[14] = "--advisory \"Clean\"";
-	$command[15] = "--artist \"$Actors\"";
-	#$command[16] = "--director \"$Director\"";
-	#$command[17] = "--screenwriters \"$Writer\"";
-	$command[18] = "--description \"$Description\"";
-	#$command[19] = "--long_description \"$Description\"";
-	$command[20] = "--tracknum \"$EpisodeNumber\"";
-	$command[21] = "--overWrite";
 }
 
 

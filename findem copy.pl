@@ -103,12 +103,7 @@ foreach my $infile (@files) {
 	my $base_in = basename "$infile_tmp";
 	my $base_out = basename "$outfile";
 	sleep (2);
-
-	if ($infile =~ /\.(avi|iso)$/i) {
-		system "$handbrake -i '$infile_tmp' -o '$outfile' --preset=$preset";
-	} else {
-		system "$subler -source '$infile' -dest '$outfile'";
-    }
+    system "$handbrake -i '$infile_tmp' -o '$outfile' --preset=$preset";
 	if ($bc_enabled eq '1'){
 		system "curl -d 'email=$bc_email' -d '&notification[from_screen_name]=Media+Procesor' -d '&notification[message]=$base_out has been Ripped.' http://boxcar.io/devices/providers/H04kjlc31sTQQE6vU7os/notifications";
 	}
