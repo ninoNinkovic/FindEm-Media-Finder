@@ -17,7 +17,7 @@ use File::Basename;
 use File::Path;
 use Data::Dumper;
 use IMDB::Film;
-use File::Fetch;
+use LWP::Simple;
 use DBI;
 use Cwd;
 use Text::Trim;
@@ -100,17 +100,6 @@ $query_handle->fetch();
 $query_handle->finish;
 undef($dbh);
 
-if ("$debug" == "1") {	
-	print "FILENAME: $filename\n";
-	print "DIRECTORY: $directories\n";
-	print "MOVIE: $movie\n";
-	print "MOVIE ID: $movie_id\n";
-	print "MOVIE NAME: $movie_title\n";
-	print "MOVIE YEAR: $year\n";
-	print "MOVIE DESCRIPTION: $description\n";
-	print "MOVIE TAGLINE: $tagline\n";
-	print "MOVIE ARTWORK: $file_path\n";
-}
 my $imdbObj = new IMDB::Film(crit => "$movie", year => "$year");
 #if($imdbObj->status) {
 #                print "Title: ".$imdbObj->title()."\n";
@@ -148,10 +137,18 @@ trim ( $genre );
 
 $type = ucfirst($type);
 
-#my $cover = File::Fetch->new(uri => '$coverurl');
-#my $where = $cover->fetch() or die $cover->error;
-#my $where = $cover->fetch( to => '/tmp' ) or die $cover->error;
-
+if ($rating eq '') {
+	$rating = 'Not Rated';
+}
+if ($file_path eq '') {
+	my ($cover, $directories) = fileparse("$coverurl");
+	@coverlist = split(/\(/, $cover);
+	$tmpfile = '/tmp/' . $coverlist[0];
+	$tmpfile =~ s/\s+$//;
+	
+	getstore ($coverurl, $tmpfile);
+	$file_path = $tmpfile;
+}
 
 if ("$debug" == "1") {
 print "Title: $title\n";
@@ -169,9 +166,12 @@ print "Full Plot: $full_plot\n";
 print "Storyline: $storyline\n";
 print "Duration: $duration\n";
 print "Genre: $genre\n";
+print "Temp File: $tmpfile\n";
 }
 $full_plot =~ s/\"/\\"/g;
 $full_plot =~ s/\'/\\'/g;
+
+
 
 #system ("rm -f \"$cover->file\"");
 #exit;
@@ -181,7 +181,7 @@ $full_plot =~ s/\'/\\'/g;
 my $Type = "Movie";
 my $HD = "yes";
 if ($HD eq "yes") {
-	$hdvid = "2";
+	$hdvid = "1";
 }
 
 #@GenreList = split(/\|/, $Genre);
@@ -363,7 +363,9 @@ if ("$use" eq "subler") {
 #print Dumper(@command);
 if ("$use" eq "mp4v2") {
 	system ("mp4art -o -q --add \"$file_path\" \"$file\"");
-	#system ("rm -f \"$cover->file\"");
+	if ($tmpfile) {
+	system ("rm $tmpfile");
+	}
 }
 system("@command") == 0
 	or die "system @command failed: $?";
@@ -441,5 +443,3 @@ sub define_config ($config) {
 	print "\n";
 	print "Your config file should be built now. Let\'s run this script again.\n\n";	
 }
-
-
