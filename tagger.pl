@@ -78,7 +78,10 @@ foreach my $infile (@files) {
 # Determine if it's a Movie or TV Show and handle appropriately
 #######################################################################################
    #
-   #if ($outfile =~ m/\(\d{4}\).m4v\z/){
+   if ($infile =~ m/\(\d{4}\).m4v\z/){
+   	print colored ['red'], "Executing '$movietag' '$outfile' \n";
+	#sleep (2);
+	system "'$movietag' '$infile'";
    #	print colored ['blue'], "Moving and Copying files around... \n\n";
    #	sleep (2);
    #	move ($outfile,$ripped) or die "Move of Movie file failed: $!";
@@ -86,7 +89,7 @@ foreach my $infile (@files) {
    #	if ($bc_enabled eq '1'){
    #		system "curl -d 'email=$bc_email' -d '&notification[from_screen_name]=Media+Procesor' -d '&notification[message]=$base_out has added to the Ripped Directory.' http://boxcar.io/devices/providers/H04kjlc31sTQQE6vU7os/notifications";
    #	}
-   #}else{
+   }else{
 	print colored ['blue'], "Executing '$tvtag' '$outfile' \n";
 	#sleep (2);
 	system "'$tvtag' '$infile'";
@@ -101,7 +104,7 @@ foreach my $infile (@files) {
    # 	if ($bc_enabled eq '1'){
    # 		system "curl -d 'email=$bc_email' -d '&notification[from_screen_name]=Media+Procesor' -d '&notification[message]=$base_out has been added to iTunes.' http://boxcar.io/devices/providers/H04kjlc31sTQQE6vU7os/notifications";
    # 	}
-   # }
+    }
    # 
  	#print Dumper(get_mp4info($outfile));
 }

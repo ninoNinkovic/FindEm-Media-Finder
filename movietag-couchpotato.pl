@@ -16,8 +16,11 @@
 use File::Basename;
 use File::Path;
 use Data::Dumper;
+use IMDB::Film;
+use File::Fetch;
 use DBI;
 use Cwd;
+use Text::Trim;
 
 if ($#ARGV != 0) {
 	print "usage: movietag-couchpotato.pl <movie file>\n";
@@ -107,16 +110,80 @@ if ("$debug" == "1") {
 	print "MOVIE DESCRIPTION: $description\n";
 	print "MOVIE TAGLINE: $tagline\n";
 	print "MOVIE ARTWORK: $file_path\n";
-	exit;
 }
+my $imdbObj = new IMDB::Film(crit => "$movie", year => "$year");
+#if($imdbObj->status) {
+#                print "Title: ".$imdbObj->title()."\n";
+#                print "Year: ".$imdbObj->year()."\n";
+#                print "Plot Symmary: ".$imdbObj->plot()."\n";
+#                print "Rated: ".$imdbObj->mpaa_info()."\n";
+#                print "Cover URL: ".$imdbObj->cover()."\n";
+#        } else {
+#                print "Something wrong: ".$imdbObj->error;
+#        }
+my $title = $imdbObj->title();
+my $type = $imdbObj->kind();
+my $year = $imdbObj->year();
+my $companies = $imdbObj->company();
+my $coverurl = $imdbObj->cover();
+my @directors = @{ $imdbObj->directors() };
+my @writers = @{ $imdbObj->writers() };
+my @genres = @{ $imdbObj->genres() };
+my $tagline = $imdbObj->tagline();
+my $plot = $imdbObj->plot;
+my $storyline = $imdbObj->storyline();
+my $imdbrating = $imdbObj->rating();
+my @cast = @{ $imdbObj->cast() };
+my $duration = $imdbObj->duration();
+my $mpaa = $imdbObj->mpaa_info();
+my $full_plot = $imdbObj->full_plot();
+@ratings = split /\ /, $mpaa;
+my $genre = $genres[0];
+my $rating = $ratings[1];
+
+trim ( $title );
+trim ( $type );
+trim ( $year );
+trim ( $genre );
+
+$type = ucfirst($type);
+
+#my $cover = File::Fetch->new(uri => '$coverurl');
+#my $where = $cover->fetch() or die $cover->error;
+#my $where = $cover->fetch( to => '/tmp' ) or die $cover->error;
 
 
+if ("$debug" == "1") {
+print "Title: $title\n";
+print "Type: $type\n";
+print "Year: $year\n";
+print "Rating: $rating\n";
+print "MPAA Rating: $mpaa\n";
+#print "Companies: join(", ", @companies)\n";
+print "Companies: $companies\n";
+print "Cover URL: $coverurl\n";
+print "Cover File: $file_path\n";
+#print "Directors: @directors\n";
+print "Plot: $plot\n";
+print "Full Plot: $full_plot\n";
+print "Storyline: $storyline\n";
+print "Duration: $duration\n";
+print "Genre: $genre\n";
+}
+$full_plot =~ s/\"/\\"/g;
+$full_plot =~ s/\'/\\'/g;
 
+#system ("rm -f \"$cover->file\"");
+#exit;
 #######################################################################################
 # Populate Variables to be tagged.
 #######################################################################################
 my $Type = "Movie";
 my $HD = "yes";
+if ($HD eq "yes") {
+	$hdvid = "2";
+}
+
 #@GenreList = split(/\|/, $Genre);
 #$Genre = $GenreList[1];
 $description =~ s/\;/./g;
@@ -252,11 +319,52 @@ if ("$use" eq "subler") {
 	#$command[19] = "--long_description \"$Description\"";
 	#$command[20] = "--tracknum \"$EpisodeNumber\"";
 	$command[21] = "--overWrite";
+
+} elsif ("$use" eq "mp4v2") {
+	$command[0] = "$tagger";
+	#$command[1] = "\"$file\""; 
+	$command[2] = "-album \"$title\"";
+	#if ($Type eq "TV Show") {
+	#	$Type = "tvshow";
+	#} elsif ($Type eq "Movie") {
+	#	$Type = "movie";
+	#}
+	$command[3] = "-type \"$type\"";
+	#if ($BannerImage) {
+	#	$command[4] = "-artwork \"$BannerImage\"";
+	#} else {
+	#	print "\n\n\tWARNING: THIS FILE WILL NOT CONTAIN ANY COVER ART, NO IMAGE FILE WAS FOUND!\n\n";
+	#	$command[4] = "";
+	#}
+	$command[5] = "-hdvideo $hdvid";
+	#$command[6] = "-episodeid \"$EpisodeNumber\"";
+	#$command[7] = "-episode \"$EpisodeNumber\"";
+	#$command[8] = "-season \"$SeasonNumber\"";
+	#$command[9] = "-network \"$TVNetwork\"";
+	#$command[10] ="-album \"$show\"";
+	$command[11] = "-genre \"$genre\"";
+	$command[12] = "-year \"$year\"";
+	$command[13] = "-song \"$movie\"";
+	$command[14] = "-rating \"$rating\"";
+	$command[15] = "-crating \"Clean\"";
+	#$command[16] = "-cast \"$Actors\"";
+	#$command[17] = "-director \"$Director\"";
+	#$command[18] = "-swriters \"$Writer\"";
+	$command[19] = "-description \"$description\"";
+	$command[20] = "-longdesc \"$description\"";
+	#$command[21] = "-track \"$EpisodeNumber\"";
+	$command[22] = "-rannotation \"$mpaa\"";
+	#$command[23] = "-show \"$title\"";
+	#$command[24] = "--name \"$title\"";
+	$command[25] = "\"$file\"";
 }
 
 
 #print Dumper(@command);
-
+if ("$use" eq "mp4v2") {
+	system ("mp4art -o -q --add \"$file_path\" \"$file\"");
+	#system ("rm -f \"$cover->file\"");
+}
 system("@command") == 0
 	or die "system @command failed: $?";
 
@@ -287,13 +395,13 @@ sub define_config ($config) {
 	if ($verbose eq "") {
 		$verbose = "no";
 	}
-	print "Define Tagger to use [MP4Tagger, Subler, or AtomicParsley (default)]: ";
+	print "Define Tagger to use [MP4Tagger, Subler, or AtomicParsley, or mp4v2 (default)]: ";
 	chomp ($use = <STDIN>);
 	if ($use eq "AtomicParsley") {
 		$use = "ATOMIC";
 	}
 	if ($use eq "") {
-		$use = "ATOMIC";
+		$use = "mp4v2";
 	}
 
 	do {

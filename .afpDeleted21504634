@@ -16,21 +16,22 @@
 use File::Basename;
 use File::Path;
 use Data::Dumper;
+use IMDB::Film;
 use DBI;
 use Cwd;
 
 if ($#ARGV != 0) {
-	print "usage: tvtag.pl <movie file>\n";
+	print "usage: movietag-couchpotato.pl <movie file>\n";
 	exit;
 }
 $location = dirname $0;
-$config = "$ENV{HOME}/.tvtag/config";
+$config = "$ENV{HOME}/.movietag/config";
 #######################################################################################
 # READ IN CONFIG FILE FROM ~/.tvtag/config
 #######################################################################################
-if ( -e "$ENV{HOME}/.tvtag") {
+if ( -e "$ENV{HOME}/.movietag") {
 	if ( -e "$config") {
-		do "$ENV{HOME}/.tvtag/config";
+		do "$ENV{HOME}/.movietag/config";
 	} else {
 		define_config();
 	}
@@ -43,24 +44,11 @@ if ( -e "$ENV{HOME}/.tvtag") {
 # Variable Declarations
 #######################################################################################
 my $file = $ARGV[0];
-my $tvdb;
 my ($filename, $directories) = fileparse("$file");
-my @list = split(/ - /, $filename);
-my $show = $list[0];
-foreach my $ES (@list) {
-	if ($ES =~ /[0-9]x[0-9]?\d+/) {
-		my @list1 = split(/x/, $ES);
-		$SeasonNumber = int $list1[0];
-		$EpisodeNumber = int $list1[1];
-	}
-}
+@filelist = split(/\(/, $filename);
+my $movie = $filelist[0];
+$movie =~ s/\s+$//;
 
-
-if ("$debug" == "2") {
-	$show = "Supernatural";
-	$SeasonNumber = "2";
-	$EpisodeNumber = "4";
-}
 
 #######################################################################################
 # Display which file is being tagged.
@@ -77,78 +65,87 @@ if ( !-e "$cache") {
 #######################################################################################
 # Initiate DB Connection
 #######################################################################################
-my $dbh = DBI->connect("dbi:SQLite:dbname=$sickbearddb","","",$dbargs);
+my $dbh = DBI->connect("dbi:SQLite:dbname=$couchpotatodb","","",$dbargs);
 
-my $TVShows_Query = "SELECT * from tv_shows where show_name like \"\%$show\%\"";
-my $query_handle = $dbh->prepare($TVShows_Query);
+my $movie_name = "SELECT * FROM librarytitle WHERE title = \"$movie\"";
+my $query_handle = $dbh->prepare($movie_name);
 $query_handle->execute();
 
-$query_handle->bind_columns(\my($show_id,$filesystem_location,$show_name,$tvdb_id,$TVNetwork,$Genre,$a,$b,$c,$d,$e,$f,$g,$h,$i,$j,$k));
+$query_handle->bind_columns(\my($movie_id,$movie_title,$simple_title,$default,$libraries_id));
 $query_handle->fetch();
 
-$Episode_Query = "SELECT * FROM tv_episodes WHERE showid=\"$tvdb_id\" AND season=\"$SeasonNumber\" AND episode=\"$EpisodeNumber\"";
-my $query_handle = $dbh->prepare($Episode_Query);
+$libraries_id_query = "select * from library_files__file_library where library_id = \"$libraries_id\"";
+my $query_handle = $dbh->prepare($libraries_id_query);
 $query_handle->execute();
 
-$query_handle->bind_columns(\my($Episode_ID,$SeriesID,$TVDBID,$EpisodeName,$null,$null,$Description,$AirDate1,$null,$null,$null,$null,$null,$null));
+$query_handle->bind_columns(\my($library_id,$file_id));
+$query_handle->fetch();
+
+$file_id_query = "select * from file where id = \"$file_id\"";
+my $query_handle = $dbh->prepare($file_id_query);
+$query_handle->execute();
+
+$query_handle->bind_columns(\my($id1,$file_path,$null,$null,$null));
+$query_handle->fetch();
+
+$movie_info_query = "select * from library where id = \"$libraries_id\"";
+my $query_handle = $dbh->prepare($movie_info_query);
+$query_handle->execute();
+
+$query_handle->bind_columns(\my($libraries_id1,$year,$identifier,$description,$tagline,$info,$null));
 $query_handle->fetch();
 
 $query_handle->finish;
 undef($dbh);
 
 if ("$debug" == "1") {	
-	print "SHOW NAME: $show_name\n";
-	print "SHOW: $show\n";
-	print "SEASON #: $SeasonNumber\n";
-	print "EP #: $EpisodeNumber\n";
+	print "FILENAME: $filename\n";
+	print "DIRECTORY: $directories\n";
+	print "MOVIE: $movie\n";
+	print "MOVIE ID: $movie_id\n";
+	print "MOVIE NAME: $movie_title\n";
+	print "MOVIE YEAR: $year\n";
+	print "MOVIE DESCRIPTION: $description\n";
+	print "MOVIE TAGLINE: $tagline\n";
+	print "MOVIE ARTWORK: $file_path\n";
+	exit;
 }
+
+my $imdbObj = new IMDB::Film(crit => '$movie');
+if($imdbObj->status) {
+                print "Title: ".$imdbObj->title()."\n";
+                print "Year: ".$imdbObj->year()."\n";
+                print "Plot Symmary: ".$imdbObj->plot()."\n";
+                print "Rated: ".$imdbObj->mpaa_info()."\n";
+        } else {
+                print "Something wrong: ".$imdbObj->error;
+        }
 
 #######################################################################################
 # Populate Variables to be tagged.
 #######################################################################################
-my $Type = "TV Show";
+my $Type = "Movie";
 my $HD = "yes";
-if ($HD eq "yes") {
-	$hdvid = "2";
-}
-
-@GenreList = split(/\|/, $Genre);
-$Genre = $GenreList[1];
-$Description =~ s/\;/./g;
-$Description =~ s/\"/\\"/g;
+#@GenreList = split(/\|/, $Genre);
+#$Genre = $GenreList[1];
+$description =~ s/\;/./g;
+$description =~ s/\"/\\"/g;
 
 #######################################################################################
 # Season image retrieval
 #######################################################################################
 
 $imageexists = 0;
-opendir (DIR, "$cache/seasons");
-@ImageFiles = readdir(DIR);
-closedir(DIR);
 
-foreach my $x (@ImageFiles) {
-	if ($x =~ /$SeriesID/) {
-		push (@Images, "$x");
-	} 
-}
-
-if (@Images) {
-	foreach my $Image (@Images) {
-		@ImageInfo = split(/-/, $Image);
-		if ("$ImageInfo[1]" == "$SeasonNumber") {
-			$imageexists = 1;
-			$BannerImage = "$cache/seasons/$Image";
-		}
-	}
-} 
-if ($imageexists == "0" && -e "$sickbeard/cache/images/$SeriesID.poster.jpg") {
+if ( -e "$file_path" ) {
 	$imageexists = 1;
-	$BannerImage = "$sickbeard/cache/images/$SeriesID.poster.jpg";
+	$BannerImage = "$file_path";
 }
 
 ########################################################################################
 # Verbose Output
 #######################################################################################
+#=begin
 if ("$verbose" eq "yes") {
 	print "************************************\n";
 	print "\n";
@@ -157,6 +154,7 @@ if ("$verbose" eq "yes") {
 	print "SERIES ID:\t$SeriesID\n";
 	print "TYPE:\t\t$Type\n";
 	print "HD:\t\t$HD\n";
+	#print "URL:\t\t$url\n";
 	print "IMAGE:\t\t$BannerImage\n";
 	print "SERIES NAME:\t$SeriesName\n";
 	print "EPISODE NAME:\t$EpisodeName\n";
@@ -177,10 +175,11 @@ if ("$verbose" eq "yes") {
 	print "************************************\n";
 }
 
+#=cut
+
 #######################################################################################
 # Build actual tagging command
 #######################################################################################
-## Subler doesn't currently work
 if ("$use" eq "subler") {
 	$sublercmd = "$subler -o \"$file\" -t ";
 	$command[0] = "\"TV Show:$SeriesName\""; 
@@ -205,8 +204,7 @@ if ("$use" eq "subler") {
 	foreach my $x (@command) {
 		`$sublercmd $x`;
 	}
-
-## MP4Tagger is only good for OS X	
+	
 } elsif ("$use" eq "MP4Tagger") {
 	$command[0] = "$mp4tagger";
 	$command[1] = "-i \"$file\""; 
@@ -234,11 +232,11 @@ if ("$use" eq "subler") {
 	$command[18] = "--description \"$Description\"";
 	$command[19] = "--long_description \"$Description\"";
 	$command[20] = "--track_n \"$EpisodeNumber\"";
-## Cross platform but no 64bit support
+
 } elsif ("$use" eq "ATOMIC") {
-	$command[0] = "$atomic";
+	$command[0] = "$tagger";
 	$command[1] = "\"$file\""; 
-	$command[2] = "--TVShowName \"$show\""; 
+	$command[2] = "--title \"$movie_title\""; 
 	$command[3] = "--stik \"$Type\"";
 	if ($BannerImage) {
 		$command[4] = "--artwork \"$BannerImage\"";
@@ -246,61 +244,28 @@ if ("$use" eq "subler") {
 		print "\n\n\tWARNING: THIS FILE WILL NOT CONTAIN ANY COVER ART, NO IMAGE FILE WAS FOUND!\n\n";
 		$command[4] = "";
 	}
-	$command[5] = "--TVEpisode \"$ProductionCode\"";
-	$command[6] = "--TVEpisodeNum \"$EpisodeNumber\"";
-	$command[7] = "--TVSeasonNum \"$SeasonNumber\"";
-	$command[8] = "--TVNetwork \"$TVNetwork\"";
-	$command[9] ="--title \"$EpisodeName\"";
-	$command[10] = "--genre \"$Genre\"";
-	$command[11] = "--year \"$AirDate\""; 
-	$command[12] = "--advisory \"Clean\"";
-	$command[13] = "--artist \"$Actors\"";
-	$command[14] = "--description \"$Description\"";
-	$command[15] = "--tracknum \"$EpisodeNumber\"";
-	$command[16] = "--overWrite";
-
-## Cross platform with the most support
-} elsif ("$use" eq "mp4v2") {
-	$command[0] = "$tagger";
-	#$command[1] = "\"$file\""; 
-	$command[2] = "-show \"$show\"";
-	#if ($Type eq "TV Show") {
-	#	$Type = "tvshow";
-	#} elsif ($Type eq "Movie") {
-	#	$Type = "movie";
-	#}
-	$command[3] = "-type \"$Type\"";
-	#if ($BannerImage) {
-	#	$command[4] = "-artwork \"$BannerImage\"";
-	#} else {
-	#	print "\n\n\tWARNING: THIS FILE WILL NOT CONTAIN ANY COVER ART, NO IMAGE FILE WAS FOUND!\n\n";
-	#	$command[4] = "";
-	#}
-	$command[5] = "-hdvideo $hdvid";
-	$command[6] = "-episodeid \"$EpisodeNumber\"";
-	$command[7] = "-episode \"$EpisodeNumber\"";
-	$command[8] = "-season \"$SeasonNumber\"";
-	$command[9] = "-network \"$TVNetwork\"";
-	$command[10] ="-album \"$show\"";
-	$command[11] = "-genre \"$Genre\"";
-	$command[12] = "-year \"$AirDate\""; 
-	$command[13] = "-song \"$EpisodeName\"";
-	$command[13] = "-rating \"TV-G\"";
-	$command[14] = "-crating \"Clean\"";
-	#$command[15] = "-cast \"$Actors\"";
-	#$command[16] = "-director \"$Director\"";
-	#$command[17] = "-swriters \"$Writer\"";
-	$command[18] = "-description \"$Description\"";
-	$command[19] = "-longdesc \"$Description\"";
-	$command[20] = "-track \"$EpisodeNumber\"";
-	$command[21] = "\"$file\"";
-
-
+	#$command[5] = "--is_hd_video $HD";
+	#$command[6] = "--TVEpisode \"$ProductionCode\"";
+	#$command[7] = "--TVEpisodeNum \"$EpisodeNumber\"";
+	#$command[8] = "--TVSeasonNum \"$SeasonNumber\"";
+	#$command[9] = "--TVNetwork \"$TVNetwork\"";
+	#$command[10] ="--title \"$EpisodeName\"";
+	#$command[11] = "--genre \"$Genre\"";
+	$command[12] = "--year \"$year\""; 
+	#$command[13] = "--contentRating \"$Rating\"";
+	#$command[14] = "--advisory \"us-tv|TV-PG|400|\"";
+	#$command[15] = "--artist \"$Actors\"";
+	#$command[16] = "--director \"$Director\"";
+	#$command[17] = "--screenwriters \"$Writer\"";
+	$command[18] = "--description \"$description\"";
+	#$command[19] = "--long_description \"$Description\"";
+	#$command[20] = "--tracknum \"$EpisodeNumber\"";
+	$command[21] = "--overWrite";
 }
 
 
 #print Dumper(@command);
-system ("mp4art -o -q --add \"$BannerImage\" \"$file\"");
+
 system("@command") == 0
 	or die "system @command failed: $?";
 
@@ -322,21 +287,22 @@ sub define_config ($config) {
 	system(clear);
 	print "You don't appear to have a config file. Let's build one. (Hit enter to accept default)\n\n";
 	sleep(1);
-	if ( !-e "$ENV{HOME}/.tvtag") {
-		mkpath("$ENV{HOME}/.tvtag");	
+	if ( !-e "$ENV{HOME}/.movietag") {
+		mkpath("$ENV{HOME}/.movietag");	
 	}
 	
-	print "Do you want verbose tagging? [yes or no (default)]: ";
+	print "Do you want verbose tagging? [yes or no (default)] ";
 	chomp ($verbose = <STDIN>);
 	if ($verbose eq "") {
 		$verbose = "no";
 	}
-	print "Define Tagger to use [MP4Tagger, AtomicParsley, or mp4v2 (default)]: ";
+	print "Define Tagger to use [MP4Tagger, Subler, or AtomicParsley (default)]: ";
 	chomp ($use = <STDIN>);
 	if ($use eq "AtomicParsley") {
 		$use = "ATOMIC";
-	}elsif ($use eq "") {
-		$use = "mp4v2";
+	}
+	if ($use eq "") {
+		$use = "ATOMIC";
 	}
 
 	do {
@@ -357,10 +323,10 @@ sub define_config ($config) {
 	}
 	
 	do {
-		print "Define Sickbeard directory: ";
-		chomp ($sickbeard = <STDIN>);
-		$sickbeard =~ s/^~/$ENV{HOME}/g;
-	} until "$sickbeard" ne "";	
+		print "Define Couchpotato directory: ";
+		chomp ($couchpotato = <STDIN>);
+		$couchpotato =~ s/^~/$ENV{HOME}/g;
+	} until "$couchpotato" ne "";	
 	
 	open (FILE, ">>$config");
 	print FILE "\$verbose = \"$verbose\"\;\n";
@@ -369,8 +335,9 @@ sub define_config ($config) {
 	print FILE "\$tagger = \"$tagger\"\;\n";
 	#print FILE "\$TVDBAPIKEY = \"$TVDBAPIKEY\"\;\n";
 	print FILE "\$cache = \"$cache\"\;\n";
-	print FILE "\$sickbeard = \"$sickbeard\"\;\n";
-	print FILE "\$sickbearddb = \"$sickbeard/sickbeard.db\"\;\n";
+	print FILE "\$couchpotato = \"$couchpotato\"\;\n";
+	print FILE "\$couchpotatodb = \"~/Library/Application\\ Support/CouchPotato/couchpotato.db\"\;\n";
+	print FILE "\$couchpotatocache = \"~/Library/Application\\ Support/CouchPotato/cache/\"\;\n";
 	
 	print "\n";
 	print "Your config file should be built now. Let\'s run this script again.\n\n";	

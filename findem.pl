@@ -141,34 +141,40 @@ foreach my $infile (@files) {
 #######################################################################################
 
 	if ($outfile =~ m/\(\d{4}\).m4v\z/){
-		print colored ['blue'], "Moving and Copying files around... \n\n";
+		print colored ['blue'], "Executing '$movietag' '$outfile' \n";
 		sleep (2);
-		move ($outfile,$ripped) or die "Move of Movie file failed: $!";
-		move ($infile_tmp,$archive) or die "Move of Original Movie file failed: $!";
-		if ($bc_enabled eq '1'){
-			system "curl -d 'email=$bc_email' -d '&notification[from_screen_name]=Media+Procesor' -d '&notification[message]=$base_out has added to the Ripped Directory.' http://boxcar.io/devices/providers/H04kjlc31sTQQE6vU7os/notifications";
-		}
-		if ($g_enabled eq '1'){
-		  my $growl = Growl::GNTP->new(	AppName => $g_app,
-			                               PeerHost => $g_host,
-			                               PeerPort => $g_port,
-			                               Password => $g_password,
-			                               AppIcon => $g_icon
-			  							);
-
-		$growl->register([
-		      { Name => $g_app,
-		        DisplayName => $g_app,	        
-		        Icon => $g_icon, }
+		system "'$movietag' '$outfile'";
+		sleep (2);	
+		print colored ['blue'], "Moving and Copying files around... \n\n";
+		#copy ($outfile,$itunes) or die "Copy Failed: $!";
+		move ($outfile,$itunes) or die "Move to iTunes Failed: $!";
+		move ($infile_tmp,$archive) or die "Move to archive failed: $!";
+#		sleep (5);
+#		move ("$itunes_tmp/$base_out",$itunes) or die "Move failed: $!";
+			if ($bc_enabled eq '1'){
+				system "curl -d 'email=$bc_email' -d '&notification[from_screen_name]=Media+Procesor' -d '&notification[message]=$base_out has been added to iTunes.' http://boxcar.io/devices/providers/H04kjlc31sTQQE6vU7os/notifications";
+			}
+			if ($g_enabled eq '1'){
+			  my $growl = Growl::GNTP->new(	AppName => $g_app,
+				                               PeerHost => $g_host,
+				                               PeerPort => $g_port,
+				                               Password => $g_password,
+				                               AppIcon => $g_icon
+				  );
+	
+			  $growl->register([
+				      { Name => $g_app,
+				        DisplayName => $g_app,	        
+				        Icon => $g_icon, }
 			  ]);
-
-		$growl->notify(
-		      	Event => $g_app,
-		      	Title => "$base_out Moved",
-		      	Message => "$base_out has been added to the Ripped Diretory.\n",
-		      	Icon => $g_icon
-		  		);
-		}		
+	
+			  $growl->notify(
+			      Event => $g_app,
+			      Title => "$base_out Added to iTunes",
+			      Message => "$base_out has been Added to your iTunes library.\n",
+			      Icon => $g_icon
+			  );
+			}
 	}else{
 		print colored ['blue'], "Executing '$tvtag' '$outfile' \n";
 		sleep (2);

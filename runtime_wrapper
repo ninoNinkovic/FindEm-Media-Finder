@@ -22,15 +22,6 @@ unless( GetOptions(
 	exit(1);
 }
 
-##
-## There is no need for this if we use /bin/sh with the system call. This must be disabled if we want to encapsulate commands requiring parameters with quotations.
-##
-#unless(-f $cmd ){
-#	print STDERR "ERROR : $cmd is not there.. Bailing!\n";
-#	exit;
-#}
-
-
 
 my $cmd_str = $cmd;
 $cmd_str =~ s/\//-/g;
