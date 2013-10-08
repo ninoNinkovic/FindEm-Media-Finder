@@ -405,7 +405,7 @@ sub define_config ($config) {
 	if ($verbose eq "") {
 		$verbose = "no";
 	}
-	print "Define Tagger to use [MP4Tagger, Subler, or AtomicParsley, or mp4v2 (default)]: ";
+	print "Define Tagger to use [MP4Tagger, or AtomicParsley, or mp4v2 (default)]: ";
 	chomp ($use = <STDIN>);
 	if ($use eq "AtomicParsley") {
 		$use = "ATOMIC";
@@ -418,12 +418,6 @@ sub define_config ($config) {
 		print "Define Location of the Tagger binary: ";
 		chomp ($tagger = <STDIN>);
 	} until "$tagger" ne "";
-		
-	#print "Define TVDB API Key (default is mine): ";
-	#chomp ($TVDBAPIKEY = <STDIN>);
-	#if ($TVDBAPIKEY eq "") {
-	#	$TVDBAPIKEY = 'E5DC4EEFA8A7AA8D';
-	#}
 
 	print "Define Image cache location: [$ENV{HOME}/.cache] ";
 	chomp ($cache = <STDIN>);
@@ -437,16 +431,20 @@ sub define_config ($config) {
 		$couchpotato =~ s/^~/$ENV{HOME}/g;
 	} until "$couchpotato" ne "";	
 	
+	do {
+		print "Define couchpotato.db location: ";
+		chomp ($couchpotatodb = <STDIN>);
+		$couchpotatodb =~ s/^~/$ENV{HOME}/g;
+	} until "$couchpotatodb" ne "";	
+	
 	open (FILE, ">>$config");
 	print FILE "\$verbose = \"$verbose\"\;\n";
 	print FILE "\$debug = \"0\"\;\n";
  	print FILE "\$use = \"$use\"\;\n";
 	print FILE "\$tagger = \"$tagger\"\;\n";
-	#print FILE "\$TVDBAPIKEY = \"$TVDBAPIKEY\"\;\n";
 	print FILE "\$cache = \"$cache\"\;\n";
 	print FILE "\$couchpotato = \"$couchpotato\"\;\n";
-	print FILE "\$couchpotatodb = \"~/Library/Application\\ Support/CouchPotato/couchpotato.db\"\;\n";
-	print FILE "\$couchpotatocache = \"~/Library/Application\\ Support/CouchPotato/cache/\"\;\n";
+	print FILE "\$couchpotatodb = \"$couchpotatodb\"\;\n";
 	
 	print "\n";
 	print "Your config file should be built now. Let\'s run this script again.\n\n";	

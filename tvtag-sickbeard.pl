@@ -208,7 +208,7 @@ if ("$use" eq "subler") {
 
 ## MP4Tagger is only good for OS X	
 } elsif ("$use" eq "MP4Tagger") {
-	$command[0] = "$mp4tagger";
+	$command[0] = "$tagger";
 	$command[1] = "-i \"$file\""; 
 	$command[2] = "--tv_show \"$show\""; 
 	$command[3] = "--media_kind \"$Type\"";
@@ -236,7 +236,7 @@ if ("$use" eq "subler") {
 	$command[20] = "--track_n \"$EpisodeNumber\"";
 ## Cross platform but no 64bit support
 } elsif ("$use" eq "ATOMIC") {
-	$command[0] = "$atomic";
+	$command[0] = "$tagger";
 	$command[1] = "\"$file\""; 
 	$command[2] = "--TVShowName \"$show\""; 
 	$command[3] = "--stik \"$Type\"";

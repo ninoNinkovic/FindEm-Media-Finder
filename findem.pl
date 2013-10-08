@@ -239,11 +239,12 @@ sub define_config ($config) {
 	if ($preset eq '') {
 		$preset = 'AppleTV';
 	}
-
-   ### do {
-   ### 	print "Define Location of your iTunes Auto Add Directory: ";
-   ### 	chomp ($mp4tagger = <STDIN>);
-   ### } until "$mp4tagger" ne "";
+	
+	print "Location of SublerCLI? [/usr/local/bin/SublerCLI (default)]: ";
+	chomp ($subler = <STDIN>);
+	if ($subler eq '') {
+		$subler = '/usr/local/bin/SublerCLI';
+	}	
 		
 	print "Define Location of your iTunes Auto Add Directory [/Volumes/Media/iTunes/iTunes Media/Automatically Add to iTunes (default)]: ";
 	chomp ($itunes = <STDIN>);
@@ -251,16 +252,16 @@ sub define_config ($config) {
 		$itunes = '/Volumes/Media/iTunes/iTunes Media/Automatically Add to iTunes';
 	}
 	
-	print "Define Location of your iTunes Temp Directory [/Volumes/Media/iTunes/iTunes Media (default)]: ";
-	chomp ($itunes_tmp = <STDIN>);
-	if ($itunes_tmp eq '') {
-		$itunes_tmp = '/Volumes/Media/iTunes/iTunes Media';
-	}
-
 	print "Define TV Tag script: [$ENV{HOME}/svn/FindEm-Media-Finder/tvtag-sickbeard.pl (default)]: ";
 	chomp ($tvtag = <STDIN>);
 	if ($tvtag eq '') {
 		$tvtag = '$ENV{HOME}/svn/FindEm-Media-Finder/tvtag-sickbeard.pl';
+	}
+	
+	print "Define Movie Tag script: [$ENV{HOME}/svn/FindEm-Media-Finder/movietag-couchpotato.pl (default)]: ";
+	chomp ($movietag = <STDIN>);
+	if ($movietag eq '') {
+		$movietag = '$ENV{HOME}/svn/FindEm-Media-Finder/movietag-couchpotato.pl';
 	}
 	
 	print "Define archive directory: [$ENV{HOME}/Movies/archive (default)]: ";
@@ -268,13 +269,7 @@ sub define_config ($config) {
 	if ($archive eq '') {
 		$archive = '$ENV{HOME}/Movies/archive';
 	}
-	
-	print "Define Ripped Movies directory: [$ENV{HOME}/Movies/Ripped (default)]: ";
-	chomp ($ripped = <STDIN>);
-	if ($ripped eq '') {
-		$ripped = '$ENV{HOME}/Movies/Ripped';
-	}
-	
+		
 	print "Use Boxcar for mobile notifications?: [Yes (default)/No]: ";
 	chomp ($bc_enabled = <STDIN>);
 	if (lc($bc_enabled) eq '') {
@@ -340,20 +335,16 @@ sub define_config ($config) {
 		
 	}
 	
-   #####do {
-   #####	print "Define Sickbeard directory: ";
-   #####	chomp ($sickbeard = <STDIN>);
-   #####	$sickbeard =~ s/^~/$ENV{HOME}/g;
-   #####} until "$sickbeard" ne "";	
-	
 	open (FILE, ">>$config");
 	print FILE "\$handbrake = \'$handbrake\'\;\n";
 	print FILE "\$preset = \'$preset\'\;\n";
+	print FILE "\$subler = \'$subler\'\;\n";
  	print FILE "\$itunes = \'$itunes\'\;\n";
-	print FILE "\$itunes_tmp = \'$itunes_tmp\'\;\n";
+	#print FILE "\$itunes_tmp = \'$itunes_tmp\'\;\n";
 	print FILE "\$tvtag = \"$tvtag\"\;\n";
+	print FILE "\$movietag = \"$movietag\"\;\n";
 	print FILE "\$archive = \"$archive\"\;\n";
-	print FILE "\$ripped = \"$ripped\"\;\n";
+	#print FILE "\$ripped = \"$ripped\"\;\n";
 	print FILE "\$bc_enabled = \"$bc_enabled\"\;\n";
 	if ($bc_enabled eq '1'){
 		print FILE "\$bc_email = \"$bc_email\"\;\n";
@@ -366,9 +357,7 @@ sub define_config ($config) {
 		print FILE "\$g_app = \"Media\\ Processor\"\;\n";
 		print FILE "\$g_icon = \"http://www.macjunk.net/images/icon.png\"\;\n";
 	}
-	###print FILE "\$sickbeard = \"$sickbeard\"\;\n";
-	###print FILE "\$sickbearddb = \"$sickbeard/sickbeard.db\"\;\n";
-	
+		
 	print "\n";
 	print "Your config file should be built now. Let's run this script again.\n\n";
 	sleep (3);
