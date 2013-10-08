@@ -76,3 +76,15 @@ If you wanted to cron this to run every 20 mintues, for example, using the runti
 	*/20 * * * * <path to git checkout>/FindEm-Media-Finder/runtime_wrapper --cmd "<path to git checkout>/FindEm-Media-Finder/findem.pl /Volumes/Media/TV /Volumes/Media/Movies" 2>&1 > /dev/null
 	
 	This would search both the TV directory and the Movies directory.  Using the runtime_wrapper would prevent the script from running again until the previous run had completed.  I've found multiple running processes at the same time can cause lots of problems with audio sync and completeness of the finished file.
+	
+More information:
+
+mp4v2 (patched) - The vanilla mp4v2 project does not yet include the ability to add mpaa ratings to movies (G, PG-13, R, etc).  So mp4v2 was recompiled using a user submitted patch and now that functionality is there.  I've included a copy of mp4v2 2.0.0 that's been patched.  All that's need is to compile this on your system.
+
+Credits:
+
+HandBrake - http://handbrake.fr
+Subler - http://code.google.com/p/subler/
+mp4v2 - https://code.google.com/p/mp4v2/
+AtomicParsley - http://atomicparsley.sourceforge.net
+MP4Tagger - https://github.com/ccjensen/MP4Tagger
