@@ -1,6 +1,6 @@
 ##About:
 
-FindEm-Media-Finder is a perl script that will recursively look through directories passed to it for any .mkv, .avi, .mov, .ts, .mp4, or .iso files and rip them to be .m4v files.  It will then pass the resulting file to the tagging script based on if it's a TV Show or a Movie.  It determines the type based on the name.  TV Shows are assumed to be named <ShowName> - <Season>x<Episode>.ext (e.g. Homeland - 2x02.mkv).  Movies are assumed to be named <Movie Name>(year).ext (e.g. World War Z(2013).mkv).  Couchpotato, Sickbeard, and imdb are all used for tagging the metadata.
+FindEm-Media-Finder is a perl script that will recursively look through directories passed to it for any .mkv, .avi, .mov, .ts, .mp4, or .iso files and rip them to be .m4v files.  It will then pass the resulting file to the tagging script based on if it's a TV Show or a Movie.  It determines the type based on the name.  TV Shows are assumed to be named `<ShowName> - <Season>x<Episode>.ext` (e.g. Homeland - 2x02.mkv).  Movies are assumed to be named `<Movie Name>(year).ext` (e.g. World War Z(2013).mkv).  Couchpotato, Sickbeard, and imdb are all used for tagging the metadata.
 
 SublerCLI, HandbrakeCLI, MP4Tagger, Atomic Parsley, and mp4v2 (patched) are all used for various functions.  SublerCLI is used where possible to repackage the files in to an .m4v due to it's ability to do it very quickly.  However, there are a few known instances where it is unable to.  Right now, those are .avi files and .iso images.  Those are still being handled by Handbrake.
 
