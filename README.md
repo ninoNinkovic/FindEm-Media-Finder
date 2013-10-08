@@ -37,20 +37,20 @@ SublerCLI
 
 Usage:
 
-	./findem.pl <directory> [<directory]
+	./findem.pl <directory> [<directory>]
 
 Setup:
 
 On first run of findem.pl, a config file will be built based on a few questions and stored at ~/.findem/config.  Those questions are:
-	1. Location of HandBrakeCLI? - This is the location of the HandbrakeCLI binary on your system.
-	2. Define HandBrake Preset to use - This can be set to any predefined preset in Handbrake.
-	3. Define Location of your iTunes Auto Add Directory - This is used to drop to finished files in to to be automatically picked up by iTunes.  This is located at <iTunes Library>/iTunes Media/Automatically Add to iTunes.
-	4. Location of SublerCLI? - This is the location of the SublerCLI binary on your system.
-	5. Define TV Tag script - This is the path to tvtag-sickbeard.pl.
-	6. Define Movie Tag script - This is the path to movietag-coupotato.pl.
-	7. Define archive directory - This is a directory where the original file will be copied to after it's been ripped.  Original files are never altered by this workflow.
-	8. Use Boxcar for mobile notifications? - If you use boxcar already, or would like to be notified on your mobile device when certains actions happen (file downloads, file finishes ripping, etc) then boxcar is an option.
-	9. Use Gowl for notifications? - Again, used for event notifications on your computer.
+	* 1. Location of HandBrakeCLI? - This is the location of the HandbrakeCLI binary on your system.
+	* 2. Define HandBrake Preset to use - This can be set to any predefined preset in Handbrake.
+	* 3. Define Location of your iTunes Auto Add Directory - This is used to drop to finished files in to to be automatically picked up by iTunes.  This is located at [Your iTunes Library]/iTunes Media/Automatically Add to iTunes.
+	* 4. Location of SublerCLI? - This is the location of the SublerCLI binary on your system.
+	* 5. Define TV Tag script - This is the path to tvtag-sickbeard.pl.
+	* 6. Define Movie Tag script - This is the path to movietag-coupotato.pl.
+	* 7. Define archive directory - This is a directory where the original file will be copied to after it's been ripped.  Original files are never altered by this workflow.
+	* 8. Use Boxcar for mobile notifications? - If you use boxcar already, or would like to be notified on your mobile device when certains actions happen (file downloads, file finishes ripping, etc) then boxcar is an option.
+	* 9. Use Gowl for notifications? - Again, used for event notifications on your computer.
 	
 Now that the config is built it will re-run, searching for media files in the directories you specified.  It will build a list of files it has found and begin to process those files one by one.  Processing those files consists of ripping to .m4v format, then passing the ripped file to the tagging script.  The first time each tagging script run, it will also build a config file located ~/.movietag/config or ~/.tvtag/config.  It will ask the following questions to build each tagging config file:
 
