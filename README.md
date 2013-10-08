@@ -37,9 +37,7 @@ SublerCLI
 
 Usage:
 
-	```
 	./findem.pl <directory> [<directory]
-	```
 
 Setup:
 
@@ -75,9 +73,7 @@ Optional Usage:
 
 If you wanted to cron this to run every 20 mintues, for example, using the runtime_wrapper, a sample command would look something like the following:
 
-	```
 	*/20 * * * * <path to git checkout>/FindEm-Media-Finder/runtime_wrapper --cmd "<path to git checkout>/FindEm-Media-Finder/findem.pl /Volumes/Media/TV /Volumes/Media/Movies" 2>&1 > /dev/null
-	```
 	
 This would search both the TV directory and the Movies directory.  Using the runtime_wrapper would prevent the script from running again until the previous run had completed.  I've found multiple running processes at the same time can cause lots of problems with audio sync and completeness of the finished file.
 	
