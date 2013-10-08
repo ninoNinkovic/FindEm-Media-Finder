@@ -2,7 +2,7 @@ About:
 
 FindEm-Media-Finder is a perl script that will recursively look through directories passed to it for any .mkv, .avi, .mov, .ts, .mp4, or .iso files and rip them to be .m4v files.  It will then pass the resulting file to the tagging script based on if it's a TV Show or a Movie.  It determines the type based on the name.  TV Shows are assumed to be named <ShowName> - <Season>x<Episode>.ext (e.g. Homeland - 2x02.mkv).  Movies are assumed to be named <Movie Name>(year).ext (e.g. World War Z(2013).mkv).  Couchpotato, Sickbeard, and imdb are all used for tagging the metadata.
 
-	SublerCLI, HandbrakeCLI, MP4Tagger, Atomic Parsley, and mp4v2 (patched) are all used for various functions.  SublerCLI is used where possible to repackage the files in to an .m4v due to it's ability to do it very quickly.  However, there are a few known instances where it is unable to.  Right now, those are .avi files and .iso images.  Those are still being handled by Handbrake.
+SublerCLI, HandbrakeCLI, MP4Tagger, Atomic Parsley, and mp4v2 (patched) are all used for various functions.  SublerCLI is used where possible to repackage the files in to an .m4v due to it's ability to do it very quickly.  However, there are a few known instances where it is unable to.  Right now, those are .avi files and .iso images.  Those are still being handled by Handbrake.
 
 findem.pl - The main workhorse that will do the finding and/or converting of files then pass to one of the tagging scripts.
 tvtag-sickbeard.pl - Used to tag TV Shows using the Sickbeard database.
@@ -37,9 +37,9 @@ SublerCLI
 
 Usage:
 
-```
-./findem.pl <directory> [<directory]
-```
+	```
+	./findem.pl <directory> [<directory]
+	```
 
 Setup:
 
@@ -79,7 +79,7 @@ If you wanted to cron this to run every 20 mintues, for example, using the runti
 	*/20 * * * * <path to git checkout>/FindEm-Media-Finder/runtime_wrapper --cmd "<path to git checkout>/FindEm-Media-Finder/findem.pl /Volumes/Media/TV /Volumes/Media/Movies" 2>&1 > /dev/null
 	```
 	
-	This would search both the TV directory and the Movies directory.  Using the runtime_wrapper would prevent the script from running again until the previous run had completed.  I've found multiple running processes at the same time can cause lots of problems with audio sync and completeness of the finished file.
+This would search both the TV directory and the Movies directory.  Using the runtime_wrapper would prevent the script from running again until the previous run had completed.  I've found multiple running processes at the same time can cause lots of problems with audio sync and completeness of the finished file.
 	
 More information:
 
