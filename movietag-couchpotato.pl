@@ -110,25 +110,25 @@ my $imdbObj = new IMDB::Film(crit => "$movie", year => "$year");
 #        } else {
 #                print "Something wrong: ".$imdbObj->error;
 #        }
-my $title = $imdbObj->title();
-my $type = $imdbObj->kind();
-my $year = $imdbObj->year();
-my $companies = $imdbObj->company();
-my $coverurl = $imdbObj->cover();
-my @directors = @{ $imdbObj->directors() };
-my @writers = @{ $imdbObj->writers() };
-my @genres = @{ $imdbObj->genres() };
-my $tagline = $imdbObj->tagline();
-my $plot = $imdbObj->plot;
-my $storyline = $imdbObj->storyline();
-my $imdbrating = $imdbObj->rating();
-my @cast = @{ $imdbObj->cast() };
-my $duration = $imdbObj->duration();
-my $mpaa = $imdbObj->mpaa_info();
-my $full_plot = $imdbObj->full_plot();
+$title = $imdbObj->title();
+$type = $imdbObj->kind();
+$year = $imdbObj->year();
+$companies = $imdbObj->company();
+$coverurl = $imdbObj->cover();
+@directors = @{ $imdbObj->directors() };
+@writers = @{ $imdbObj->writers() };
+@genres = @{ $imdbObj->genres() };
+$tagline = $imdbObj->tagline();
+$plot = $imdbObj->plot;
+$storyline = $imdbObj->storyline();
+$imdbrating = $imdbObj->rating();
+@cast = @{ $imdbObj->cast() };
+$duration = $imdbObj->duration();
+$mpaa = $imdbObj->mpaa_info();
+$full_plot = $imdbObj->full_plot();
 @ratings = split /\ /, $mpaa;
-my $genre = $genres[0];
-my $rating = $ratings[1];
+$genre = $genres[0];
+$rating = $ratings[1];
 
 trim ( $title );
 trim ( $type );
@@ -141,7 +141,7 @@ if ($rating eq '') {
 	$rating = 'Not Rated';
 }
 if ($file_path eq '') {
-	my ($cover, $directories) = fileparse("$coverurl");
+	($cover, $directories) = fileparse("$coverurl");
 	@coverlist = split(/\(/, $cover);
 	$tmpfile = '/tmp/' . $coverlist[0];
 	$tmpfile =~ s/\s+$//;
@@ -156,11 +156,11 @@ print "Type: $type\n";
 print "Year: $year\n";
 print "Rating: $rating\n";
 print "MPAA Rating: $mpaa\n";
-#print "Companies: join(", ", @companies)\n";
+print "Companies: join(", ", @companies)\n";
 print "Companies: $companies\n";
 print "Cover URL: $coverurl\n";
 print "Cover File: $file_path\n";
-#print "Directors: @directors\n";
+print "Directors: @directors\n";
 print "Plot: $plot\n";
 print "Full Plot: $full_plot\n";
 print "Storyline: $storyline\n";
@@ -182,6 +182,14 @@ my $Type = "Movie";
 my $HD = "yes";
 if ($HD eq "yes") {
 	$hdvid = "1";
+}
+
+if ($rating eq 'R') {
+	$crating = "Explicit";
+} elsif ($rating eq 'Not Rated') {
+	$crating = "None";
+} else {
+	$crating = "Clean";
 }
 
 #@GenreList = split(/\|/, $Genre);
@@ -341,12 +349,12 @@ if ("$use" eq "subler") {
 	#$command[7] = "-episode \"$EpisodeNumber\"";
 	#$command[8] = "-season \"$SeasonNumber\"";
 	#$command[9] = "-network \"$TVNetwork\"";
-	#$command[10] ="-album \"$show\"";
+	$command[10] ="-comment \"$mpaa\"";
 	$command[11] = "-genre \"$genre\"";
 	$command[12] = "-year \"$year\"";
 	$command[13] = "-song \"$movie\"";
 	$command[14] = "-rating \"$rating\"";
-	$command[15] = "-crating \"Clean\"";
+	$command[15] = "-crating \"$crating\"";
 	#$command[16] = "-cast \"$Actors\"";
 	#$command[17] = "-director \"$Director\"";
 	#$command[18] = "-swriters \"$Writer\"";
