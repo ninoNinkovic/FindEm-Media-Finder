@@ -10,7 +10,6 @@
 #	automatically retrieve all relevant information to the TV show you are trying to 
 #	tag from Sick-Beard.
 #
-#	Any questions can be directed to: tvtag@linuxjunk.org
 #
 #######################################################################################
 use File::Basename;
