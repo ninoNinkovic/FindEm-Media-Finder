@@ -1,16 +1,15 @@
 #!/usr/bin/env perl
 #######################################################################################
-# tvtag-sickbeard.pl
+# movietag-couchpotato.pl
 #
-# Usage: tvtag-sickbeard.pl <M4V file>
+# Usage: movietag-couchpotato.pl <M4V file>
 #
 # Description:
-#	Tvtag.pl is used to tag H.264 files with metadata for use in iTunes. Basically it
-#	makes them pretty when imported into iTunes. It's very simple to use and should
-#	automatically retrieve all relevant information to the TV show you are trying to 
-#	tag from Sick-Beard.
+#	movietag-couchpotato.pl is used to tag H.264 files with metadata for use in iTunes. 
+#   Basically it makes them pretty when imported into iTunes. It's very simple to use 
+#   and should automatically retrieve all relevant information to the Movie you are 
+#   trying to tag from Couchpotato and imdb.
 #
-#	Any questions can be directed to: tvtag@linuxjunk.org
 #
 #######################################################################################
 use File::Basename;
