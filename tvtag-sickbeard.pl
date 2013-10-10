@@ -8,7 +8,7 @@
 #	Tvtag.pl is used to tag H.264 files with metadata for use in iTunes. Basically it
 #	makes them pretty when imported into iTunes. It's very simple to use and should
 #	automatically retrieve all relevant information to the TV show you are trying to 
-#	tag from Sick-Beard.
+#	tag from Sickbeard.
 #
 #
 #######################################################################################
