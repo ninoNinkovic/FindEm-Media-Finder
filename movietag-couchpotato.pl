@@ -100,7 +100,7 @@ $query_handle->fetch();
 $query_handle->finish;
 undef($dbh);
 
-my $imdbObj = new IMDB::Film(crit => "$movie", year => "$year");
+my $imdbObj = new IMDB::Film(crit => "$identifier");
 #if($imdbObj->status) {
 #                print "Title: ".$imdbObj->title()."\n";
 #                print "Year: ".$imdbObj->year()."\n";
@@ -140,6 +140,29 @@ $type = ucfirst($type);
 if ($rating eq '') {
 	$rating = 'Not Rated';
 }
+
+if ($genre eq 'Action') {
+	$genre = 'Action & Adventure';
+}
+if ($genre eq 'Adventure') {
+	$genre = 'Action & Adventure';
+}
+if ($genre eq 'Kids') {
+	$genre = 'Kids & Family';
+}
+if ($genre eq 'Family') {
+	$genre = 'Kids & Family';
+}
+if ($genre eq 'Science Fiction') {
+	$genre = 'Sci-Fi & Fantasy';
+}
+if ($genre eq 'Sci-Fi') {
+	$genre = 'Sci-Fi & Fantasy';
+}
+if ($genre eq 'Fantasy') {
+	$genre = 'Sci-Fi & Fantasy';
+}
+
 if ($file_path eq '') {
 	($cover, $directories) = fileparse("$coverurl");
 	@coverlist = split(/\(/, $cover);
