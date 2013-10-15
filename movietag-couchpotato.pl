@@ -44,10 +44,10 @@ if ( -e "$ENV{HOME}/.movietag") {
 #######################################################################################
 # Variable Declarations
 #######################################################################################
-my $file = $ARGV[0];
-my ($filename, $directories) = fileparse("$file");
+$file = $ARGV[0];
+($filename, $directories) = fileparse("$file");
 @filelist = split(/\(/, $filename);
-my $movie = $filelist[0];
+$movie = $filelist[0];
 $movie =~ s/\s+$//;
 
 
@@ -173,6 +173,7 @@ if ($file_path eq '') {
 }
 
 if ("$debug" == "1") {
+print "IMDB id: $identifier\n";
 print "Title: $title\n";
 print "Type: $type\n";
 print "Year: $year\n";
@@ -183,25 +184,47 @@ print "Companies: $companies\n";
 print "Cover URL: $coverurl\n";
 print "Cover File: $file_path\n";
 print "Directors: @directors\n";
+print "Cast: $cast[0]\n";
+print "Writers: $writers[0]\n";
 print "Plot: $plot\n";
 print "Full Plot: $full_plot\n";
 print "Storyline: $storyline\n";
 print "Duration: $duration\n";
 print "Genre: $genre\n";
 print "Temp File: $tmpfile\n";
+print Dumper($directors);
+print "Testing: $directors{'id'}\n";
+use IMDB::Persons;
+
+        #
+        # Retrieve a person information by IMDB code
+        #
+        my $person = new IMDB::Persons(crit => '0868219');
+        if($person->status) {
+                print "Name: ".$person->name."\n";
+                print "Birth Date: ".$person->date_of_birth."\n";
+        }
+use JSON;
+use WebService::IMDBAPI;
+use WebService::IMDBAPI::Result;
+
+$imdbapi = WebService::IMDBAPI->new();
+$results = $imdbapi->search_by_id('$identifier');
+$result = $results[0];
+#print $results->title;
+#print $results->rated;
+
+
 }
 $full_plot =~ s/\"/\\"/g;
 $full_plot =~ s/\'/\\'/g;
 
-
-
-#system ("rm -f \"$cover->file\"");
 #exit;
 #######################################################################################
 # Populate Variables to be tagged.
 #######################################################################################
-my $Type = "Movie";
-my $HD = "yes";
+$Type = "Movie";
+$HD = "yes";
 if ($HD eq "yes") {
 	$hdvid = "1";
 }
@@ -264,7 +287,12 @@ if ("$verbose" eq "yes") {
 }
 
 #=cut
-
+if ("$use" eq "mp4v2") {
+	system ("mp4art -o -q -z --add \"$file_path\" \"$file\"");
+	if ($tmpfile) {
+	system ("rm $tmpfile");
+	}
+}
 #######################################################################################
 # Build actual tagging command
 #######################################################################################
@@ -391,12 +419,6 @@ if ("$use" eq "subler") {
 
 
 #print Dumper(@command);
-if ("$use" eq "mp4v2") {
-	system ("mp4art -o -q --add \"$file_path\" \"$file\"");
-	if ($tmpfile) {
-	system ("rm $tmpfile");
-	}
-}
 system("@command") == 0
 	or die "system @command failed: $?";
 
