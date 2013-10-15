@@ -346,7 +346,7 @@ sub define_config ($config) {
 	#print "Define TVDB API Key (default is mine): ";
 	#chomp ($TVDBAPIKEY = <STDIN>);
 	#if ($TVDBAPIKEY eq "") {
-	#	$TVDBAPIKEY = 'E5DC4EEFA8A7AA8D';
+	#	$TVDBAPIKEY = 'F3EE3AE655C54A95';
 	#}
 
 	print "Define Image cache location: [$ENV{HOME}/.cache] ";
