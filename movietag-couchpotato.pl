@@ -127,39 +127,32 @@ $mpaa = $imdbObj->mpaa_info();
 $full_plot = $imdbObj->full_plot();
 @ratings = split /\ /, $mpaa;
 $genre = $genres[0];
-$rating = $ratings[1];
+$rated = $ratings[1];
 
 trim ( $title );
 trim ( $type );
 trim ( $year );
 trim ( $genre );
+trim ( $genres[0]);
 
 $type = ucfirst($type);
 
-if ($rating eq '') {
-	$rating = 'Not Rated';
+if ($rated eq '') {
+	$rated = 'Not Rated';
 }
 
-if ($genre eq 'Action') {
+if ($type eq 'Video') {
+	$type = 'Movie';
+}
+
+if ($genres[0] =~ /^ (?: Science Fiction | Sci-Fi | Fantasy ) $/x) {
+	$genre = 'Sci-Fi & Fantasy';
+}elsif ($genres[0] =~ /^ (?: Action | Adventure | War ) $/x) {
 	$genre = 'Action & Adventure';
-}
-if ($genre eq 'Adventure') {
-	$genre = 'Action & Adventure';
-}
-if ($genre eq 'Kids') {
+}elsif ($genres[0] =~ /^ (?: Kids | Family ) $/x) {
 	$genre = 'Kids & Family';
-}
-if ($genre eq 'Family') {
-	$genre = 'Kids & Family';
-}
-if ($genre eq 'Science Fiction') {
-	$genre = 'Sci-Fi & Fantasy';
-}
-if ($genre eq 'Sci-Fi') {
-	$genre = 'Sci-Fi & Fantasy';
-}
-if ($genre eq 'Fantasy') {
-	$genre = 'Sci-Fi & Fantasy';
+}else {
+	$genre = $genres[0];
 }
 
 if ($file_path eq '') {
@@ -177,7 +170,7 @@ print "IMDB id: $identifier\n";
 print "Title: $title\n";
 print "Type: $type\n";
 print "Year: $year\n";
-print "Rating: $rating\n";
+print "Rated: $rated\n";
 print "MPAA Rating: $mpaa\n";
 print "Companies: join(", ", @companies)\n";
 print "Companies: $companies\n";
@@ -229,9 +222,9 @@ if ($HD eq "yes") {
 	$hdvid = "1";
 }
 
-if ($rating eq 'R') {
+if ($rated eq 'R') {
 	$crating = "Explicit";
-} elsif ($rating eq 'Not Rated') {
+} elsif ($rated eq 'Not Rated') {
 	$crating = "None";
 } else {
 	$crating = "Clean";
@@ -287,8 +280,8 @@ if ("$verbose" eq "yes") {
 }
 
 #=cut
-if ("$use" eq "mp4v2") {
-	system ("mp4art -o -q -z --add \"$file_path\" \"$file\"");
+if ($use eq "mp4v2") {
+	system ("/usr/local/bin/mp4art -o -q -z --add \"$file_path\" \"$file\"");
 	if ($tmpfile) {
 	system ("rm $tmpfile");
 	}
@@ -380,45 +373,45 @@ if ("$use" eq "subler") {
 
 } elsif ("$use" eq "mp4v2") {
 	$command[0] = "$tagger";
-	#$command[1] = "\"$file\""; 
-	$command[2] = "-album \"$title\"";
-	#if ($Type eq "TV Show") {
-	#	$Type = "tvshow";
-	#} elsif ($Type eq "Movie") {
-	#	$Type = "movie";
-	#}
-	$command[3] = "-type \"$type\"";
-	#if ($BannerImage) {
-	#	$command[4] = "-artwork \"$BannerImage\"";
-	#} else {
-	#	print "\n\n\tWARNING: THIS FILE WILL NOT CONTAIN ANY COVER ART, NO IMAGE FILE WAS FOUND!\n\n";
-	#	$command[4] = "";
-	#}
-	$command[5] = "-hdvideo $hdvid";
-	#$command[6] = "-episodeid \"$EpisodeNumber\"";
-	#$command[7] = "-episode \"$EpisodeNumber\"";
-	#$command[8] = "-season \"$SeasonNumber\"";
-	#$command[9] = "-network \"$TVNetwork\"";
-	$command[10] ="-comment \"$mpaa\"";
-	$command[11] = "-genre \"$genre\"";
-	$command[12] = "-year \"$year\"";
-	$command[13] = "-song \"$movie\"";
-	$command[14] = "-rating \"$rating\"";
-	$command[15] = "-crating \"$crating\"";
-	#$command[16] = "-cast \"$Actors\"";
-	#$command[17] = "-director \"$Director\"";
-	#$command[18] = "-swriters \"$Writer\"";
-	$command[19] = "-description \"$description\"";
-	$command[20] = "-longdesc \"$description\"";
-	#$command[21] = "-track \"$EpisodeNumber\"";
-	$command[22] = "-rannotation \"$mpaa\"";
-	#$command[23] = "-show \"$title\"";
-	#$command[24] = "--name \"$title\"";
-	$command[25] = "\"$file\"";
+	$command[1] = "-album \"$title\"";	
+	$command[2] = "-type \"$type\"";	
+	$command[3] = "-hdvideo $hdvid";	
+	$command[4] = "-comment \"$mpaa\"";
+	$command[5] = "-genre \"$genre\"";
+	$command[6] = "-year \"$year\"";
+	$command[7] = "-song \"$movie\"";
+	$command[8] = "-rating \"$rated\"";
+	$command[9] = "-crating \"$crating\"";	
+	$command[10] = "-description \"$description\"";
+	$command[11] = "-longdesc \"$description\"";	
+	$command[12] = "-rannotation \"$mpaa\"";
+	$command[13] = "\"$file\"";
 }
 
+open (STDOUT, "| tee -ai log.txt");
+print "IMDB id: $identifier\n";
+print "Title: $title\n";
+print "Type: $type\n";
+print "Year: $year\n";
+print "Rated: $rated\n";
+print "MPAA Rating: $mpaa\n";
+print "Companies: $companies\n";
+print "Cover URL: $coverurl\n";
+print "Cover File: $file_path\n";
+print "Directors: @directors\n";
+print "Cast: $cast[0]\n";
+print "Writers: $writers[0]\n";
+print "Plot: $plot\n";
+print "Full Plot: $full_plot\n";
+print "Storyline: $storyline\n";
+print "Duration: $duration\n";
+print "Genres: $genres[0]\n";
+print "Genre: $genre\n";
+print "Temp File: $tmpfile\n\n";
+print "\$use = $use\n\n";
+print Dumper(@command);
+close (STDOUT);
 
-#print Dumper(@command);
 system("@command") == 0
 	or die "system @command failed: $?";
 
@@ -426,15 +419,15 @@ system("@command") == 0
 #######################################################################################
 # Subroutines
 #######################################################################################
-sub trimlist {
-	my $CommaDelimited;
-	my @SplitArray;
-	my $i;
-	my $List;
-	@SplitArray = split(/\|/, $_[0]);
-	shift(@SplitArray);
-	join(', ', @SplitArray);
-}
+#sub trimlist {
+#	my $CommaDelimited;
+#	my @SplitArray;
+#	my $i;
+#	my $List;
+#	@SplitArray = split(/\|/, $_[0]);
+#	shift(@SplitArray);
+#	join(', ', @SplitArray);
+#}
 
 sub define_config ($config) {
 	system(clear);
