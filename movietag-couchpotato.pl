@@ -147,9 +147,9 @@ if ($type eq 'Video') {
 
 if ($genres[0] =~ /^ (?: Science Fiction | Sci-Fi | Fantasy ) $/x) {
 	$genre = 'Sci-Fi & Fantasy';
-}elsif ($genres[0] =~ /^ (?: Action | Adventure | War ) $/x) {
+}elsif ($genres[0] =~ /^ (?: Action | Adventure | War | Thriller | Crime ) $/x) {
 	$genre = 'Action & Adventure';
-}elsif ($genres[0] =~ /^ (?: Kids | Family ) $/x) {
+}elsif ($genres[0] =~ /^ (?: Kids | Family | Animation ) $/x) {
 	$genre = 'Kids & Family';
 }else {
 	$genre = $genres[0];
