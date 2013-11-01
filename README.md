@@ -27,6 +27,9 @@ File::Path
 Email::Valid  
 Term::ANSIScreen  
 Growl::GNTP  
+JSON  
+WebService::IMDBAPI  
+Mediainfo  
 
 ###Applications:
 mp4v2 (patched)  

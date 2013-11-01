@@ -10,6 +10,8 @@ use Cwd;
 use Email::Valid;
 use Term::ANSIScreen qw/:color /;
 use Growl::GNTP;
+use Mediainfo;
+
 
 my $config = "$ENV{HOME}/.findem/config";
 print colored ['blue'], "Welcome to the greatest script in the world!\n";
@@ -102,13 +104,21 @@ foreach my $infile (@files) {
     move($infile,$infile_tmp);
 	my $base_in = basename "$infile_tmp";
 	my $base_out = basename "$outfile";
-	sleep (2);
 
-	if ($infile =~ /\.(avi|iso)$/i) {
-		system "$handbrake -i '$infile_tmp' -o '$outfile' --preset=$preset";
+	## Figure out if audio is DTS or not
+	my $file_info = new Mediainfo("filename" => "$infile_tmp");
+	my $audio = $file_info->{audio_format};
+	sleep (2);
+	
+	if ($audio eq dts) {		
+		system "$handbrake -i '$infile_tmp' -o '$outfile' --preset=$preset";		
 	} else {
-		system "$subler -source '$infile' -dest '$outfile'";
-    }
+		if ($infile =~ /\.(avi|iso)$/i) {
+		system "$handbrake -i '$infile_tmp' -o '$outfile' --preset=$preset";
+		} else {
+		system "$subler -source '$infile_tmp' -dest '$outfile' -optimize";
+    	}
+	}
 	if ($bc_enabled eq '1'){
 		system "curl -d 'email=$bc_email' -d '&notification[from_screen_name]=Media+Procesor' -d '&notification[message]=$base_out has been Ripped.' http://boxcar.io/devices/providers/H04kjlc31sTQQE6vU7os/notifications";
 	}
@@ -339,7 +349,7 @@ sub define_config ($config) {
 	print FILE "\$handbrake = \'$handbrake\'\;\n";
 	print FILE "\$preset = \'$preset\'\;\n";
 	print FILE "\$subler = \'$subler\'\;\n";
- 	print FILE "\$itunes = \'$itunes\'\;\n";
+ 	print FILE "\$itunes = \"$itunes\\\"\;\n";
 	#print FILE "\$itunes_tmp = \'$itunes_tmp\'\;\n";
 	print FILE "\$tvtag = \"$tvtag\"\;\n";
 	print FILE "\$movietag = \"$movietag\"\;\n";
