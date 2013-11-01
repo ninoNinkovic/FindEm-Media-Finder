@@ -18,6 +18,7 @@ use Data::Dumper;
 use DBI;
 use Cwd;
 
+require "common_config.pl";
 
 if ($#ARGV != 0) {
 	print "usage: tvtag.pl <movie file>\n";
@@ -32,10 +33,10 @@ if ( -e "$ENV{HOME}/.tvtag") {
 	if ( -e "$config") {
 		do "$ENV{HOME}/.tvtag/config";
 	} else {
-		define_config();
+		tv_config( 1 );
 	}
 } else {
-	define_config();
+	tv_config( 1 );
 }
 
 
@@ -303,77 +304,3 @@ if ("$use" eq "subler") {
 system ("mp4art -o -q --add \"$BannerImage\" \"$file\"");
 system("@command") == 0
 	or die "system @command failed: $?";
-
-
-#######################################################################################
-# Subroutines
-#######################################################################################
-sub trimlist {
-	my $CommaDelimited;
-	my @SplitArray;
-	my $i;
-	my $List;
-	@SplitArray = split(/\|/, $_[0]);
-	shift(@SplitArray);
-	join(', ', @SplitArray);
-}
-
-sub define_config ($config) {
-	system(clear);
-	print "You don't appear to have a config file. Let's build one. (Hit enter to accept default)\n\n";
-	sleep(1);
-	if ( !-e "$ENV{HOME}/.tvtag") {
-		mkpath("$ENV{HOME}/.tvtag");	
-	}
-	
-	print "Do you want verbose tagging? [yes or no (default)]: ";
-	chomp ($verbose = <STDIN>);
-	if ($verbose eq "") {
-		$verbose = "no";
-	}
-	print "Define Tagger to use [MP4Tagger, AtomicParsley, or mp4v2 (default)]: ";
-	chomp ($use = <STDIN>);
-	if ($use eq "AtomicParsley") {
-		$use = "ATOMIC";
-	}elsif ($use eq "") {
-		$use = "mp4v2";
-	}
-
-	do {
-		print "Define Location of the Tagger binary: ";
-		chomp ($tagger = <STDIN>);
-	} until "$tagger" ne "";
-		
-	#print "Define TVDB API Key (default is mine): ";
-	#chomp ($TVDBAPIKEY = <STDIN>);
-	#if ($TVDBAPIKEY eq "") {
-	#	$TVDBAPIKEY = 'F3EE3AE655C54A95';
-	#}
-
-	print "Define Image cache location: [$ENV{HOME}/.cache] ";
-	chomp ($cache = <STDIN>);
-	if ($cache eq "") {
-		$cache = "$ENV{HOME}/.cache";
-	}
-	
-	do {
-		print "Define Sickbeard directory: ";
-		chomp ($sickbeard = <STDIN>);
-		$sickbeard =~ s/^~/$ENV{HOME}/g;
-	} until "$sickbeard" ne "";	
-	
-	open (FILE, ">>$config");
-	print FILE "\$verbose = \"$verbose\"\;\n";
-	print FILE "\$debug = \"0\"\;\n";
- 	print FILE "\$use = \"$use\"\;\n";
-	print FILE "\$tagger = \"$tagger\"\;\n";
-	#print FILE "\$TVDBAPIKEY = \"$TVDBAPIKEY\"\;\n";
-	print FILE "\$cache = \"$cache\"\;\n";
-	print FILE "\$sickbeard = \"$sickbeard\"\;\n";
-	print FILE "\$sickbearddb = \"$sickbeard/sickbeard.db\"\;\n";
-	
-	print "\n";
-	print "Your config file should be built now. Let\'s run this script again.\n\n";	
-}
-
-

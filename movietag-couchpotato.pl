@@ -28,16 +28,16 @@ if ($#ARGV != 0) {
 $location = dirname $0;
 $config = "$ENV{HOME}/.movietag/config";
 #######################################################################################
-# READ IN CONFIG FILE FROM ~/.tvtag/config
+# READ IN CONFIG FILE FROM ~/.movietag/config
 #######################################################################################
 if ( -e "$ENV{HOME}/.movietag") {
 	if ( -e "$config") {
 		do "$ENV{HOME}/.movietag/config";
 	} else {
-		define_config();
+		movie_config( 1 );
 	}
 } else {
-	define_config();
+	movie_config( 1 );
 }
 
 
@@ -230,8 +230,6 @@ if ($rated eq 'R') {
 	$crating = "Clean";
 }
 
-#@GenreList = split(/\|/, $Genre);
-#$Genre = $GenreList[1];
 $description =~ s/\;/./g;
 $description =~ s/\"/\\"/g;
 
@@ -279,7 +277,6 @@ if ("$verbose" eq "yes") {
 	print "************************************\n";
 }
 
-#=cut
 if ($use eq "mp4v2") {
 	system ("/usr/local/bin/mp4art -o -q -z --add \"$file_path\" \"$file\"");
 	if ($tmpfile) {
@@ -414,75 +411,3 @@ close (STDOUT);
 
 system("@command") == 0
 	or die "system @command failed: $?";
-
-
-#######################################################################################
-# Subroutines
-#######################################################################################
-#sub trimlist {
-#	my $CommaDelimited;
-#	my @SplitArray;
-#	my $i;
-#	my $List;
-#	@SplitArray = split(/\|/, $_[0]);
-#	shift(@SplitArray);
-#	join(', ', @SplitArray);
-#}
-
-sub define_config ($config) {
-	system(clear);
-	print "You don't appear to have a config file. Let's build one. (Hit enter to accept default)\n\n";
-	sleep(1);
-	if ( !-e "$ENV{HOME}/.movietag") {
-		mkpath("$ENV{HOME}/.movietag");	
-	}
-	
-	print "Do you want verbose tagging? [yes or no (default)] ";
-	chomp ($verbose = <STDIN>);
-	if ($verbose eq "") {
-		$verbose = "no";
-	}
-	print "Define Tagger to use [MP4Tagger, or AtomicParsley, or mp4v2 (default)]: ";
-	chomp ($use = <STDIN>);
-	if ($use eq "AtomicParsley") {
-		$use = "ATOMIC";
-	}
-	if ($use eq "") {
-		$use = "mp4v2";
-	}
-
-	do {
-		print "Define Location of the Tagger binary: ";
-		chomp ($tagger = <STDIN>);
-	} until "$tagger" ne "";
-
-	print "Define Image cache location: [$ENV{HOME}/.cache] ";
-	chomp ($cache = <STDIN>);
-	if ($cache eq "") {
-		$cache = "$ENV{HOME}/.cache";
-	}
-	
-	do {
-		print "Define Couchpotato directory: ";
-		chomp ($couchpotato = <STDIN>);
-		$couchpotato =~ s/^~/$ENV{HOME}/g;
-	} until "$couchpotato" ne "";	
-	
-	do {
-		print "Define couchpotato.db location: ";
-		chomp ($couchpotatodb = <STDIN>);
-		$couchpotatodb =~ s/^~/$ENV{HOME}/g;
-	} until "$couchpotatodb" ne "";	
-	
-	open (FILE, ">>$config");
-	print FILE "\$verbose = \"$verbose\"\;\n";
-	print FILE "\$debug = \"0\"\;\n";
- 	print FILE "\$use = \"$use\"\;\n";
-	print FILE "\$tagger = \"$tagger\"\;\n";
-	print FILE "\$cache = \"$cache\"\;\n";
-	print FILE "\$couchpotato = \"$couchpotato\"\;\n";
-	print FILE "\$couchpotatodb = \"$couchpotatodb\"\;\n";
-	
-	print "\n";
-	print "Your config file should be built now. Let\'s run this script again.\n\n";	
-}
