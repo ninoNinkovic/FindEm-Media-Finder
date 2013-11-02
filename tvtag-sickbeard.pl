@@ -18,7 +18,7 @@ use Data::Dumper;
 use DBI;
 use Cwd;
 
-require "common_config.pl";
+require "/Users/caleb/Documents/git/FindEm-Media-Finder/common_config.pl";
 
 if ($#ARGV != 0) {
 	print "usage: tvtag.pl <movie file>\n";

@@ -12,7 +12,7 @@ use Term::ANSIScreen qw/:color /;
 use Growl::GNTP;
 use Mediainfo;
 
-require "common_config.pl";
+require "/Users/caleb/Documents/git/FindEm-Media-Finder/common_config.pl";
 
 my $config = "$ENV{HOME}/.findem/config";
 print colored ['blue'], "Welcome to the greatest script in the world!\n";
@@ -87,7 +87,6 @@ foreach my $infile (@files) {
     print colored ['red'], $infile . "\n"; 
     my $infile_tmp = $infile;
     $infile_tmp =~ s/\'//g;
-    #rmove($infile,$inflie_tmp);    
     my $outfile = $infile_tmp;
     $outfile =~ s/\.(?:mkv|avi|mov|ts|mp4|iso)\z/\.m4v/;
     mkpath($outfile);
@@ -96,20 +95,49 @@ foreach my $infile (@files) {
 	my $base_in = basename "$infile_tmp";
 	my $base_out = basename "$outfile";
 
-	## Figure out if audio is DTS or not
+	## Get some info about the file
 	my $file_info = new Mediainfo("filename" => "$infile_tmp");
 	my $audio = $file_info->{audio_format};
+
+if ("$debug" == "1") {
+	print $file_info->{filename}, "\n";
+	print $file_info->{filesize}, "\n";
+	print $file_info->{container}, "\n";
+	print $file_info->{length}, "\n";
+	print $file_info->{bitrate}, "\n";
+	print $file_info->{video_codec}, "\n";
+	print $file_info->{video_format}, "\n";
+	print $file_info->{video_length}, "\n";
+	print $file_info->{video_bitrate}, "\n";
+	print $file_info->{width}, "\n";
+	print $file_info->{height}, "\n";
+	print $file_info->{fps}, "\n";
+	print $file_info->{fps_mode}, "\n";
+	print $file_info->{dar}, "\n";
+	print $file_info->{frame_count}, "\n";
+	print $file_info->{audio_codec}, "\n";
+	print $file_info->{audio_format}, "\n";
+	print $file_info->{audio_length}, "\n";
+	print $file_info->{audio_bitrate}, "\n";
+	print $file_info->{audio_rate}, "\n";
+	print $file_info->{audio_language}, "\n";
+	print $file_info->{have_video}, "\n";
+	print $file_info->{have_audio}, "\n";
+	print $file_info->{rotation}, "\n";
+	print $file_info->{video_codec_profile}, "\n";
+	print $file_info->{video_format_profile}, "\n";
+}
 	sleep (2);
 	
-	if ($audio eq dts) {		
-		system "$handbrake -i '$infile_tmp' -o '$outfile' --preset=$preset";		
+	if ($audio eq dts) {
+		system "$mkvdts2ac3 -n -d -i --new '$infile_tmp'";
+	} 
+	if ($infile =~ /\.(avi|iso)$/i) {
+	system "$handbrake -i '$infile_tmp' -o '$outfile' --preset=$preset";
 	} else {
-		if ($infile =~ /\.(avi|iso)$/i) {
-		system "$handbrake -i '$infile_tmp' -o '$outfile' --preset=$preset";
-		} else {
-		system "$subler -source '$infile_tmp' -dest '$outfile' -optimize";
-    	}
-	}
+	system "$subler -source '$infile_tmp' -dest '$outfile'";
+    }
+
 	if ($bc_enabled eq '1'){
 		system "curl -d 'email=$bc_email' -d '&notification[from_screen_name]=Media+Procesor' -d '&notification[message]=$base_out has been Ripped.' http://boxcar.io/devices/providers/H04kjlc31sTQQE6vU7os/notifications";
 	}

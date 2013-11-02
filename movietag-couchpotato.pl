@@ -21,6 +21,8 @@ use DBI;
 use Cwd;
 use Text::Trim;
 
+require "/Users/caleb/Documents/git/FindEm-Media-Finder/common_config.pl";
+
 if ($#ARGV != 0) {
 	print "usage: movietag-couchpotato.pl <movie file>\n";
 	exit;
@@ -99,7 +101,21 @@ $query_handle->fetch();
 $query_handle->finish;
 undef($dbh);
 
-my $imdbObj = new IMDB::Film(crit => "$identifier");
+$filename =~ s/\'//g;
+
+if ($identifier) {
+	print "IMDB ID is $identifier \n";
+    $imdbObj = new IMDB::Film(crit => "$identifier");
+} else {
+	print "Looking by Title: $movie \n";
+	$imdbObj = new IMDB::Film(crit => "$movie") || print "UNKNOWN ERROR\n" ; 
+	}
+	if($@) {
+	                # Opsssss! We got an exception!
+	                print "EXCEPTION: $@!";
+	                next;
+	        }
+	
 #if($imdbObj->status) {
 #                print "Title: ".$imdbObj->title()."\n";
 #                print "Year: ".$imdbObj->year()."\n";
