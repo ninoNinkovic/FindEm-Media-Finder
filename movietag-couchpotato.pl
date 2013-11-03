@@ -20,6 +20,7 @@ use LWP::Simple;
 use DBI;
 use Cwd;
 use Text::Trim;
+use Mediainfo;
 
 require "/Users/caleb/Documents/git/FindEm-Media-Finder/common_config.pl";
 
@@ -171,6 +172,20 @@ if ($genres[0] =~ /^ (?: Science Fiction | Sci-Fi | Fantasy ) $/x) {
 	$genre = $genres[0];
 }
 
+$file_info = new Mediainfo("filename" => "$file");
+$height = $file_info->{height};
+$width = $file_info->{width};
+
+if ( $height < 720 ) {
+	$hdvid = "0";
+}
+if ( $height > 719 ) {
+	$hdvid = "1";
+}
+if ( $height > 1079 ) {
+	$hdvid = "2";
+}
+
 if ($file_path eq '') {
 	($cover, $directories) = fileparse("$coverurl");
 	@coverlist = split(/\(/, $cover);
@@ -181,50 +196,6 @@ if ($file_path eq '') {
 	$file_path = $tmpfile;
 }
 
-if ("$debug" == "1") {
-print "IMDB id: $identifier\n";
-print "Title: $title\n";
-print "Type: $type\n";
-print "Year: $year\n";
-print "Rated: $rated\n";
-print "MPAA Rating: $mpaa\n";
-print "Companies: join(", ", @companies)\n";
-print "Companies: $companies\n";
-print "Cover URL: $coverurl\n";
-print "Cover File: $file_path\n";
-print "Directors: @directors\n";
-print "Cast: $cast[0]\n";
-print "Writers: $writers[0]\n";
-print "Plot: $plot\n";
-print "Full Plot: $full_plot\n";
-print "Storyline: $storyline\n";
-print "Duration: $duration\n";
-print "Genre: $genre\n";
-print "Temp File: $tmpfile\n";
-print Dumper($directors);
-print "Testing: $directors{'id'}\n";
-use IMDB::Persons;
-
-        #
-        # Retrieve a person information by IMDB code
-        #
-        my $person = new IMDB::Persons(crit => '0868219');
-        if($person->status) {
-                print "Name: ".$person->name."\n";
-                print "Birth Date: ".$person->date_of_birth."\n";
-        }
-use JSON;
-use WebService::IMDBAPI;
-use WebService::IMDBAPI::Result;
-
-$imdbapi = WebService::IMDBAPI->new();
-$results = $imdbapi->search_by_id('$identifier');
-$result = $results[0];
-#print $results->title;
-#print $results->rated;
-
-
-}
 $full_plot =~ s/\"/\\"/g;
 $full_plot =~ s/\'/\\'/g;
 
@@ -233,10 +204,7 @@ $full_plot =~ s/\'/\\'/g;
 # Populate Variables to be tagged.
 #######################################################################################
 $Type = "Movie";
-$HD = "yes";
-if ($HD eq "yes") {
-	$hdvid = "1";
-}
+
 
 if ($rated eq 'R') {
 	$crating = "Explicit";
@@ -259,6 +227,66 @@ if ( -e "$file_path" ) {
 	$imageexists = 1;
 	$BannerImage = "$file_path";
 }
+
+########################################################################################
+# Debug Output
+#######################################################################################
+
+if ("$debug" == "1") {
+print "************************************\n";
+print "IMDB id: \t$identifier\n";
+print "Title: \t\t$title\n";
+print "Type: \t\t$type\n";
+print "Year: \t\t$year\n";
+print "Rated: \t\t$rated\n";
+print "MPAA Rating: \t$mpaa\n";
+print "Height is: \t$height\n";
+print "Width is: \t$width\n";
+print "HD Value is: \t$hdvid\n";
+print "Companies: \tjoin(", ", @companies)\n";
+print "Companies: \t$companies\n";
+print "Cover URL: \t$coverurl\n";
+print "Cover File: \t$file_path\n";
+print "Directors: \t@directors\n";
+print "Cast: \t\t$cast[0]\n";
+print "Writers: \t$writers[0]\n";
+print "Plot: \t\t$plot\n";
+print "Full Plot: \t$full_plot\n";
+print "Storyline: \t$storyline\n";
+print "Duration: \t$duration\n";
+print "Genre: \t\t$genre\n";
+print "Temp File: \t$tmpfile\n\n";
+print "************************************\n\n";
+
+print "************************************\n";
+print Dumper($directors);
+print "Testing: $directors{'id'}\n";
+print "************************************\n\n";
+print "************************************\n";
+use IMDB::Persons;
+
+        #
+        # Retrieve a person information by IMDB code
+        #
+        my $person = new IMDB::Persons(crit => '0868219');
+        if($person->status) {
+                print "Name: ".$person->name."\n";
+                print "Birth Date: ".$person->date_of_birth."\n\n";
+        }
+use JSON;
+use WebService::IMDBAPI;
+use WebService::IMDBAPI::Result;
+
+$imdbapi = WebService::IMDBAPI->new();
+$results = $imdbapi->search_by_id('$identifier');
+$result = $results[0];
+#print $results->title;
+#print $results->rated;
+print "************************************\n\n";
+
+}
+
+#######################################################################################
 
 ########################################################################################
 # Verbose Output
@@ -302,32 +330,7 @@ if ($use eq "mp4v2") {
 #######################################################################################
 # Build actual tagging command
 #######################################################################################
-if ("$use" eq "subler") {
-	$sublercmd = "$subler -o \"$file\" -t ";
-	$command[0] = "\"TV Show:$SeriesName\""; 
-	$command[1] = "\"Media Kind:$Type\"";
-	$command[2] = "\"Artwork:$BannerImage\"";
-	$command[3] = "\"HD Video:$HD\"";
-	$command[4] = "\"TV Episode ID:$ProductionCode\"";
-	$command[5] = "\"TV Episode #:$EpisodeNumber\"";
-	$command[6] = "\"TV Season:$SeasonNumber\"";
-	$command[7] = "\"TV Network:$TVNetwork\"";
-	$command[8] ="\"Name:$EpisodeName\"";
-	$command[9] = "\"Genre:$Genre\"";
-	$command[10] = "\"Release Date:$AirDate\""; 
-	$command[11] = "\"Rating:$Rating\"";
-	$command[12] = "\"Content Rating:Clean\"";
-	$command[13] = "\"Cast:$Actors\"";
-	$command[14] = "\"Director:$Director\"";
-	$command[15] = "\"Screenwriters:$Writer\"";
-	$command[16] = "\"Description:$Description\"";
-	$command[17] = "\"Long Description:$Description\"";
-	
-	foreach my $x (@command) {
-		`$sublercmd $x`;
-	}
-	
-} elsif ("$use" eq "MP4Tagger") {
+if ("$use" eq "MP4Tagger") {
 	$command[0] = "$mp4tagger";
 	$command[1] = "-i \"$file\""; 
 	$command[2] = "--tv_show \"$show\""; 
@@ -355,35 +358,6 @@ if ("$use" eq "subler") {
 	$command[19] = "--long_description \"$Description\"";
 	$command[20] = "--track_n \"$EpisodeNumber\"";
 
-} elsif ("$use" eq "ATOMIC") {
-	$command[0] = "$tagger";
-	$command[1] = "\"$file\""; 
-	$command[2] = "--title \"$movie_title\""; 
-	$command[3] = "--stik \"$Type\"";
-	if ($BannerImage) {
-		$command[4] = "--artwork \"$BannerImage\"";
-	} else {
-		print "\n\n\tWARNING: THIS FILE WILL NOT CONTAIN ANY COVER ART, NO IMAGE FILE WAS FOUND!\n\n";
-		$command[4] = "";
-	}
-	#$command[5] = "--is_hd_video $HD";
-	#$command[6] = "--TVEpisode \"$ProductionCode\"";
-	#$command[7] = "--TVEpisodeNum \"$EpisodeNumber\"";
-	#$command[8] = "--TVSeasonNum \"$SeasonNumber\"";
-	#$command[9] = "--TVNetwork \"$TVNetwork\"";
-	#$command[10] ="--title \"$EpisodeName\"";
-	#$command[11] = "--genre \"$Genre\"";
-	$command[12] = "--year \"$year\""; 
-	#$command[13] = "--contentRating \"$Rating\"";
-	#$command[14] = "--advisory \"us-tv|TV-PG|400|\"";
-	#$command[15] = "--artist \"$Actors\"";
-	#$command[16] = "--director \"$Director\"";
-	#$command[17] = "--screenwriters \"$Writer\"";
-	$command[18] = "--description \"$description\"";
-	#$command[19] = "--long_description \"$Description\"";
-	#$command[20] = "--tracknum \"$EpisodeNumber\"";
-	$command[21] = "--overWrite";
-
 } elsif ("$use" eq "mp4v2") {
 	$command[0] = "$tagger";
 	$command[1] = "-album \"$title\"";	
@@ -400,6 +374,7 @@ if ("$use" eq "subler") {
 	$command[12] = "-rannotation \"$mpaa\"";
 	$command[13] = "\"$file\"";
 }
+
 
 open (STDOUT, "| tee -ai log.txt");
 print "IMDB id: $identifier\n";
@@ -420,7 +395,7 @@ print "Storyline: $storyline\n";
 print "Duration: $duration\n";
 print "Genres: $genres[0]\n";
 print "Genre: $genre\n";
-print "Temp File: $tmpfile\n\n";
+print "Temp File: $tmpfile\n";
 print "\$use = $use\n\n";
 print Dumper(@command);
 close (STDOUT);
