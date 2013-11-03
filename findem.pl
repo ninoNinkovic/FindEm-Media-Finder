@@ -96,8 +96,8 @@ foreach my $infile (@files) {
 	my $base_out = basename "$outfile";
 
 	## Get some info about the file
-	my $file_info = new Mediainfo("filename" => "$infile_tmp");
-	my $audio = $file_info->{audio_format};
+	$file_info = new Mediainfo("filename" => "$infile_tmp");
+	$audio = $file_info->{audio_format};
 
 if ("$debug" == "1") {
 	print $file_info->{filename}, "\n";
@@ -130,7 +130,7 @@ if ("$debug" == "1") {
 	sleep (2);
 	
 	if ($audio eq dts) {
-		system "$mkvdts2ac3 -n -d -i --new '$infile_tmp'";
+		system "$mkvdts2ac3 -n -d -i '$infile_tmp'";
 	} 
 	if ($infile =~ /\.(avi|iso)$/i) {
 	system "$handbrake -i '$infile_tmp' -o '$outfile' --preset=$preset";
@@ -151,7 +151,7 @@ if ("$debug" == "1") {
 
 	  $growl->register([
 	      { Name => $g_app,
-	        DisplayName => $g_app,	        
+	        DisplayName => $g_app,
 	        Icon => $g_icon, }
 	  ]);
 
