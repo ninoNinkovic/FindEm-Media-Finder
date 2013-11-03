@@ -17,6 +17,8 @@ use File::Path;
 use Data::Dumper;
 use DBI;
 use Cwd;
+use Mediainfo;
+use IMDB::Film;
 
 require "/Users/caleb/Documents/git/FindEm-Media-Finder/common_config.pl";
 
@@ -97,6 +99,36 @@ $query_handle->fetch();
 $query_handle->finish;
 undef($dbh);
 
+$imdbObj = new IMDB::Film(crit => "$show_name");
+
+$title = $imdbObj->title();
+$type = $imdbObj->kind();
+$year = $imdbObj->year();
+$companies = $imdbObj->company();
+$coverurl = $imdbObj->cover();
+@directors = @{ $imdbObj->directors() };
+@writers = @{ $imdbObj->writers() };
+@genres = @{ $imdbObj->genres() };
+$tagline = $imdbObj->tagline();
+$plot = $imdbObj->plot;
+$storyline = $imdbObj->storyline();
+$imdbrating = $imdbObj->rating();
+@cast = @{ $imdbObj->cast() };
+$duration = $imdbObj->duration();
+$mpaa = $imdbObj->mpaa_info();
+$full_plot = $imdbObj->full_plot();
+@ratings = split /\ /, $mpaa;
+$genre = $genres[0];
+$rated = $ratings[1];
+
+trim ( $title );
+trim ( $type );
+trim ( $year );
+trim ( $genre );
+trim ( $genres[0]);
+
+$type = ucfirst($type);
+
 if ("$debug" == "1") {	
 	print "SHOW NAME: $show_name\n";
 	print "SHOW: $show\n";
@@ -108,10 +140,31 @@ if ("$debug" == "1") {
 # Populate Variables to be tagged.
 #######################################################################################
 my $Type = "TV Show";
-my $HD = "yes";
-if ($HD eq "yes") {
+
+$file_info = new Mediainfo("filename" => "$file");
+$height = $file_info->{height};
+$width = $file_info->{width};
+
+if ( $height < 720 ) {
+	$hdvid = "0";
+}
+if ( $height > 719 ) {
+	$hdvid = "1";
+}
+if ( $height > 1079 ) {
 	$hdvid = "2";
 }
+
+if ( $hdvid == "0" ) {
+	$HD = "Standard Def";
+}
+if ( $hdvid == "1" ) {
+	$HD = "720p";
+}
+if ( $hdvid == "2" ) {
+	$HD = "1080p";
+}
+
 
 @GenreList = split(/\|/, $Genre);
 $Genre = $GenreList[1];
@@ -148,6 +201,66 @@ if ($imageexists == "0" && -e "$sickbeard/cache/images/$SeriesID.poster.jpg") {
 }
 
 ########################################################################################
+# Debug Output
+#######################################################################################
+
+if ("$debug" == "1") {
+print "************************************\n";
+print "IMDB id: \t$identifier\n";
+print "Title: \t\t$title\n";
+print "Type: \t\t$type\n";
+print "Year: \t\t$year\n";
+print "Rated: \t\t$rated\n";
+print "MPAA Rating: \t$mpaa\n";
+print "Height is: \t$height\n";
+print "Width is: \t$width\n";
+print "HD Value is: \t$hdvid\n";
+print "Companies: \tjoin(", ", @companies)\n";
+print "Companies: \t$companies\n";
+print "Cover URL: \t$coverurl\n";
+print "Cover File: \t$file_path\n";
+print "Directors: \t@directors\n";
+print "Cast: \t\t$cast[0]\n";
+print "Writers: \t$writers[0]\n";
+print "Plot: \t\t$plot\n";
+print "Full Plot: \t$full_plot\n";
+print "Storyline: \t$storyline\n";
+print "Duration: \t$duration\n";
+print "Genre: \t\t$genre\n";
+print "Temp File: \t$tmpfile\n\n";
+print "************************************\n\n";
+
+print "************************************\n";
+print Dumper($directors);
+print "Testing: $directors{'id'}\n";
+print "************************************\n\n";
+print "************************************\n";
+use IMDB::Persons;
+
+        #
+        # Retrieve a person information by IMDB code
+        #
+        my $person = new IMDB::Persons(crit => '0868219');
+        if($person->status) {
+                print "Name: ".$person->name."\n";
+                print "Birth Date: ".$person->date_of_birth."\n\n";
+        }
+use JSON;
+use WebService::IMDBAPI;
+use WebService::IMDBAPI::Result;
+
+$imdbapi = WebService::IMDBAPI->new();
+$results = $imdbapi->search_by_id('$identifier');
+$result = $results[0];
+#print $results->title;
+#print $results->rated;
+print "************************************\n\n";
+
+}
+
+#######################################################################################
+
+########################################################################################
 # Verbose Output
 #######################################################################################
 if ("$verbose" eq "yes") {
@@ -182,33 +295,7 @@ if ("$verbose" eq "yes") {
 # Build actual tagging command
 #######################################################################################
 ## Subler doesn't currently work
-if ("$use" eq "subler") {
-	$sublercmd = "$subler -o \"$file\" -t ";
-	$command[0] = "\"TV Show:$SeriesName\""; 
-	$command[1] = "\"Media Kind:$Type\"";
-	$command[2] = "\"Artwork:$BannerImage\"";
-	$command[3] = "\"HD Video:$HD\"";
-	$command[4] = "\"TV Episode ID:$ProductionCode\"";
-	$command[5] = "\"TV Episode #:$EpisodeNumber\"";
-	$command[6] = "\"TV Season:$SeasonNumber\"";
-	$command[7] = "\"TV Network:$TVNetwork\"";
-	$command[8] ="\"Name:$EpisodeName\"";
-	$command[9] = "\"Genre:$Genre\"";
-	$command[10] = "\"Release Date:$AirDate\""; 
-	$command[11] = "\"Rating:$Rating\"";
-	$command[12] = "\"Content Rating:Clean\"";
-	$command[13] = "\"Cast:$Actors\"";
-	$command[14] = "\"Director:$Director\"";
-	$command[15] = "\"Screenwriters:$Writer\"";
-	$command[16] = "\"Description:$Description\"";
-	$command[17] = "\"Long Description:$Description\"";
-	
-	foreach my $x (@command) {
-		`$sublercmd $x`;
-	}
-
-## MP4Tagger is only good for OS X	
-} elsif ("$use" eq "MP4Tagger") {
+if ("$use" eq "MP4Tagger") {
 	$command[0] = "$tagger";
 	$command[1] = "-i \"$file\""; 
 	$command[2] = "--tv_show \"$show\""; 
@@ -236,67 +323,25 @@ if ("$use" eq "subler") {
 	$command[19] = "--long_description \"$Description\"";
 	$command[20] = "--track_n \"$EpisodeNumber\"";
 ## Cross platform but no 64bit support
-} elsif ("$use" eq "ATOMIC") {
-	$command[0] = "$tagger";
-	$command[1] = "\"$file\""; 
-	$command[2] = "--TVShowName \"$show\""; 
-	$command[3] = "--stik \"$Type\"";
-	if ($BannerImage) {
-		$command[4] = "--artwork \"$BannerImage\"";
-	} else {
-		print "\n\n\tWARNING: THIS FILE WILL NOT CONTAIN ANY COVER ART, NO IMAGE FILE WAS FOUND!\n\n";
-		$command[4] = "";
-	}
-	$command[5] = "--TVEpisode \"$ProductionCode\"";
-	$command[6] = "--TVEpisodeNum \"$EpisodeNumber\"";
-	$command[7] = "--TVSeasonNum \"$SeasonNumber\"";
-	$command[8] = "--TVNetwork \"$TVNetwork\"";
-	$command[9] ="--title \"$EpisodeName\"";
-	$command[10] = "--genre \"$Genre\"";
-	$command[11] = "--year \"$AirDate\""; 
-	$command[12] = "--advisory \"Clean\"";
-	$command[13] = "--artist \"$Actors\"";
-	$command[14] = "--description \"$Description\"";
-	$command[15] = "--tracknum \"$EpisodeNumber\"";
-	$command[16] = "--overWrite";
-
-## Cross platform with the most support
 } elsif ("$use" eq "mp4v2") {
 	$command[0] = "$tagger";
-	#$command[1] = "\"$file\""; 
-	$command[2] = "-show \"$show\"";
-	#if ($Type eq "TV Show") {
-	#	$Type = "tvshow";
-	#} elsif ($Type eq "Movie") {
-	#	$Type = "movie";
-	#}
-	$command[3] = "-type \"$Type\"";
-	#if ($BannerImage) {
-	#	$command[4] = "-artwork \"$BannerImage\"";
-	#} else {
-	#	print "\n\n\tWARNING: THIS FILE WILL NOT CONTAIN ANY COVER ART, NO IMAGE FILE WAS FOUND!\n\n";
-	#	$command[4] = "";
-	#}
-	$command[5] = "-hdvideo $hdvid";
-	$command[6] = "-episodeid \"$EpisodeNumber\"";
-	$command[7] = "-episode \"$EpisodeNumber\"";
-	$command[8] = "-season \"$SeasonNumber\"";
-	$command[9] = "-network \"$TVNetwork\"";
-	$command[10] ="-album \"$show\"";
-	$command[11] = "-genre \"$Genre\"";
-	$command[12] = "-year \"$AirDate\""; 
-	$command[13] = "-song \"$EpisodeName\"";
-	$command[13] = "-rating \"TV-G\"";
-	$command[14] = "-crating \"Clean\"";
-	#$command[15] = "-cast \"$Actors\"";
-	#$command[16] = "-director \"$Director\"";
-	#$command[17] = "-swriters \"$Writer\"";
-	$command[18] = "-description \"$Description\"";
-	$command[19] = "-longdesc \"$Description\"";
-	$command[20] = "-track \"$EpisodeNumber\"";
-	$command[21] = "\"$file\"";
-
-
+	$command[1] = "-show \"$show\"";
+	$command[2] = "-type \"$Type\"";
+	$command[3] = "-hdvideo $hdvid";
+	$command[4] = "-episodeid \"$EpisodeNumber\"";
+	$command[5] = "-episode \"$EpisodeNumber\"";
+	$command[6] = "-season \"$SeasonNumber\"";
+	$command[7] = "-network \"$TVNetwork\"";
+	$command[8] ="-album \"$show\"";
+	$command[9] = "-genre \"$Genre\"";
+	$command[10] = "-year \"$AirDate\""; 
+	$command[11] = "-song \"$EpisodeName\"";
+	$command[12] = "-rating \"TV-G\"";
+	$command[13] = "-crating \"Clean\"";
+	$command[14] = "-description \"$Description\"";
+	$command[15] = "-longdesc \"$Description\"";
+	$command[16] = "-track \"$EpisodeNumber\"";
+	$command[17] = "\"$file\"";
 }
 
 
