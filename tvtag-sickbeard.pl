@@ -19,6 +19,7 @@ use DBI;
 use Cwd;
 use Mediainfo;
 use IMDB::Film;
+use Text::Trim;
 
 require "/Users/caleb/Documents/git/FindEm-Media-Finder/common_config.pl";
 
