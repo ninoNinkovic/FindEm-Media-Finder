@@ -18,10 +18,10 @@ use Data::Dumper;
 use DBI;
 use Cwd;
 use Mediainfo;
-use IMDB::Film;
 use Text::Trim;
+use TVDB::API;
+use XML::Simple;
 
-require "/Users/caleb/Documents/git/FindEm-Media-Finder/common_config.pl";
 
 if ($#ARGV != 0) {
 	print "usage: tvtag.pl <movie file>\n";
@@ -29,6 +29,9 @@ if ($#ARGV != 0) {
 }
 $location = dirname $0;
 $config = "$ENV{HOME}/.tvtag/config";
+
+require "$location" . "/common_config.pl";
+#require "/Users/caleb/Documents/git/FindEm-Media-Finder/common_config.pl";
 #######################################################################################
 # READ IN CONFIG FILE FROM ~/.tvtag/config
 #######################################################################################
@@ -74,133 +77,160 @@ print "Tagging $filename\n";
 #######################################################################################
 # Verify that needed directories exist
 #######################################################################################
-if ( !-e "$cache") {
-	mkpath("$cache");
-}
-
+#if ( !-e "$cache") {
+#	mkpath("$cache");
+#}
+#
 #######################################################################################
 # Initiate DB Connection
 #######################################################################################
-my $dbh = DBI->connect("dbi:SQLite:dbname=$sickbearddb","","",$dbargs);
+#my $dbh = DBI->connect("dbi:SQLite:dbname=$sickbearddb","","",$dbargs);
+#
+#my $TVShows_Query = "SELECT * from tv_shows where show_name like \"\%$show\%\"";
+#my $query_handle = $dbh->prepare($TVShows_Query);
+#$query_handle->execute();
+#
+#$query_handle->bind_columns(\my($show_id,$filesystem_location,$show_name,$tvdb_id,$TVNetwork,$Genre,$a,$b,$c,$d,$e,$f,$g,$h,$i,$j,$k));
+#$query_handle->fetch();
+#
+#$Episode_Query = "SELECT * FROM tv_episodes WHERE showid=\"$tvdb_id\" AND season=\"$SeasonNumber\" AND episode=\"$EpisodeNumber\"";
+#my $query_handle = $dbh->prepare($Episode_Query);
+#$query_handle->execute();
+#
+#$query_handle->bind_columns(\my($Episode_ID,$SeriesID,$TVDBID,$EpisodeName,$null,$null,$Description,$AirDate,$null,$null,$null,$null,$null,$null));
+#$query_handle->fetch();
+#
+#$query_handle->finish;
+#undef($dbh);
 
-my $TVShows_Query = "SELECT * from tv_shows where show_name like \"\%$show\%\"";
-my $query_handle = $dbh->prepare($TVShows_Query);
-$query_handle->execute();
+$basename = $filename;
+$basename =~ s/\.(?:m4v)\z/\.xml/;
 
-$query_handle->bind_columns(\my($show_id,$filesystem_location,$show_name,$tvdb_id,$TVNetwork,$Genre,$a,$b,$c,$d,$e,$f,$g,$h,$i,$j,$k));
-$query_handle->fetch();
+print "Episode: $basename \n";
 
-$Episode_Query = "SELECT * FROM tv_episodes WHERE showid=\"$tvdb_id\" AND season=\"$SeasonNumber\" AND episode=\"$EpisodeNumber\"";
-my $query_handle = $dbh->prepare($Episode_Query);
-$query_handle->execute();
+$seriesxml = new XML::Simple;
+$seriesdata = $seriesxml->XMLin("$directories" . "series.xml");
 
-$query_handle->bind_columns(\my($Episode_ID,$SeriesID,$TVDBID,$EpisodeName,$null,$null,$Description,$AirDate1,$null,$null,$null,$null,$null,$null));
-$query_handle->fetch();
+$episodexml = new XML::Simple;
+$episodedata = $episodexml->XMLin("$directories" . "metadata\/" . "$basename");
 
-$query_handle->finish;
-undef($dbh);
+if ("$debug" == "1") {
+	print "Directory: $directories \n";
+	print Dumper($episodedata);
+	#exit;
+}
 
-$imdbObj = new IMDB::Film(crit => "$show_name");
+$copy = chr(169);
 
-$title = $imdbObj->title();
-$type = $imdbObj->kind();
-$year = $imdbObj->year();
-$companies = $imdbObj->company();
-$coverurl = $imdbObj->cover();
-@directors = @{ $imdbObj->directors() };
-@writers = @{ $imdbObj->writers() };
-@genres = @{ $imdbObj->genres() };
-$tagline = $imdbObj->tagline();
-$plot = $imdbObj->plot;
-$storyline = $imdbObj->storyline();
-$imdbrating = $imdbObj->rating();
-@cast = @{ $imdbObj->cast() };
-$duration = $imdbObj->duration();
-$mpaa = $imdbObj->mpaa_info();
-$full_plot = $imdbObj->full_plot();
-@ratings = split /\ /, $mpaa;
-$genre = $genres[0];
-$rated = $ratings[1];
+## Episode Data
+$director = $episodedata->{Director};
+$writer = $episodedata->{Writer};
+$airdate = $episodedata->{FirstAired};
+$episodename = $episodedata->{EpisodeName};
+$episodenumber = $episodedata->{EpisodeNumber};
+$seasonnumber = $episodedata->{SeasonNumber};
+$episodeid = $episodedata->{EpisodeID};
+$seasonid = $episodedata->{seasonid};
+$description = $episodedata->{Overview};
 
-trim ( $title );
-trim ( $type );
-trim ( $year );
-trim ( $genre );
-trim ( $genres[0]);
+## Series Data
+$rated = $seriesdata->{ContentRating};
+$seriesid = $seriesdata->{SeriesID};
+$tvnetwork = $seriesdata->{Network};
+$seriesdesc = $seriesdata->{Overview};
+@actors = split /\|/, $seriesdata->{Actors};
+$show = $seriesdata->{SeriesName};
+@genre = split /\|/, $seriesdata->{genre};
 
-$type = ucfirst($type);
+shift (@actors);
+shift (@genre);
+$genre = @genre[0];
 
 if ("$debug" == "1") {	
 	print "SHOW NAME: $show_name\n";
 	print "SHOW: $show\n";
-	print "SEASON #: $SeasonNumber\n";
-	print "EP #: $EpisodeNumber\n";
+	print "SEASON #: $seasonnumber\n";
+	print "EP #: $episodenumber\n";
 }
 
 #######################################################################################
 # Populate Variables to be tagged.
 #######################################################################################
-my $Type = "TV Show";
+my $type = "TV Show";
 
 $file_info = new Mediainfo("filename" => "$file");
 $height = $file_info->{height};
 $width = $file_info->{width};
 
-if ( $height < 720 ) {
+if ( $height < 700 ) {
 	$hdvid = "0";
 }
-if ( $height > 719 ) {
+if ( $height > 699 ) {
 	$hdvid = "1";
 }
-if ( $height > 1079 ) {
+if ( $height > 999 ) {
 	$hdvid = "2";
 }
 
 if ( $hdvid == "0" ) {
-	$HD = "Standard Def";
+	$hd = "Standard Def";
 }
 if ( $hdvid == "1" ) {
-	$HD = "720p";
+	$hd = "720p";
 }
 if ( $hdvid == "2" ) {
-	$HD = "1080p";
+	$hd = "1080p";
+}
+
+if ($rated =~ /^ (?: TV-MA | TV-14 ) $/x) {
+	$crating = "Explicit";
+} elsif ($rated =~ /^ (?: TV-PG | TV-G | TV-Y7 | TV-Y ) $/x) {
+	$crating = "Clean";
+} else {
+	$crating = "None";
 }
 
 
-@GenreList = split(/\|/, $Genre);
-$Genre = $GenreList[1];
-$Description =~ s/\;/./g;
-$Description =~ s/\"/\\"/g;
+#@GenreList = split(/\|/, $genre);
+#$genre = $GenreList[0];
+$description =~ s/\;/./g;
+$description =~ s/\"/\\"/g;
+$director =~ s/\|/\ /g;
+$writer =~ s/\|/\ /g;
+trim ( $director );
+trim ( $writer );
 
 #######################################################################################
 # Season image retrieval
 #######################################################################################
-
-$imageexists = 0;
-opendir (DIR, "$cache/seasons");
-@ImageFiles = readdir(DIR);
-closedir(DIR);
-
-foreach my $x (@ImageFiles) {
-	if ($x =~ /$SeriesID/) {
-		push (@Images, "$x");
-	} 
-}
-
-if (@Images) {
-	foreach my $Image (@Images) {
-		@ImageInfo = split(/-/, $Image);
-		if ("$ImageInfo[1]" == "$SeasonNumber") {
-			$imageexists = 1;
-			$BannerImage = "$cache/seasons/$Image";
-		}
-	}
-} 
-if ($imageexists == "0" && -e "$sickbeard/cache/images/$SeriesID.poster.jpg") {
-	$imageexists = 1;
-	$BannerImage = "$sickbeard/cache/images/$SeriesID.poster.jpg";
-}
-
+#
+#$imageexists = 0;
+#opendir (DIR, "$cache/seasons");
+#@ImageFiles = readdir(DIR);
+#closedir(DIR);
+#
+#foreach my $x (@ImageFiles) {
+#	if ($x =~ /$seriesid/) {
+#		push (@Images, "$x");
+#	} 
+#}
+#
+#if (@Images) {
+#	foreach my $Image (@Images) {
+#		@ImageInfo = split(/-/, $Image);
+#		if ("$ImageInfo[1]" == "$seasonnumber") {
+#			$imageexists = 1;
+#			$BannerImage = "$cache/seasons/$Image";
+#		}
+#	}
+#} 
+#if ($imageexists == "0" && -e "$sickbeard/cache/images/$seriesid.poster.jpg") {
+#	$imageexists = 1;
+#	$BannerImage = "$sickbeard/cache/images/$seriesid.poster.jpg";
+#}
+#
+$image = "$directories" . "folder.jpg";
+#
 ########################################################################################
 # Debug Output
 #######################################################################################
@@ -235,27 +265,6 @@ print "************************************\n";
 print Dumper($directors);
 print "Testing: $directors{'id'}\n";
 print "************************************\n\n";
-print "************************************\n";
-use IMDB::Persons;
-
-        #
-        # Retrieve a person information by IMDB code
-        #
-        my $person = new IMDB::Persons(crit => '0868219');
-        if($person->status) {
-                print "Name: ".$person->name."\n";
-                print "Birth Date: ".$person->date_of_birth."\n\n";
-        }
-use JSON;
-use WebService::IMDBAPI;
-use WebService::IMDBAPI::Result;
-
-$imdbapi = WebService::IMDBAPI->new();
-$results = $imdbapi->search_by_id('$identifier');
-$result = $results[0];
-#print $results->title;
-#print $results->rated;
-print "************************************\n\n";
 
 }
 
@@ -269,25 +278,27 @@ if ("$verbose" eq "yes") {
 	print "\n";
 	print "FILENAME:\t$filename\n";
 	print "DIRECTORY:\t$directories\n";
-	print "SERIES ID:\t$SeriesID\n";
-	print "TYPE:\t\t$Type\n";
-	print "HD:\t\t$HD\n";
-	print "IMAGE:\t\t$BannerImage\n";
-	print "SERIES NAME:\t$SeriesName\n";
-	print "EPISODE NAME:\t$EpisodeName\n";
-	print "AIR DATE:\t$AirDate\n";
-	print "RATING:\t\t$Rating\n";
-	print "GENRE:\t\t$Genre\n";
-	print "SHORT DESC:\t$Description\n";
-	print "DESC:\t\t$Description\n";
-	print "TV NETWORK:\t$TVNetwork\n";
+	print "SERIES ID:\t$seriesid\n";
+	print "TYPE:\t\t$type\n";
+	print "HD:\t\t$hd\n";
+	print "TV RATING:\t$rated\n";
+	print "CONTENT RATING:\t$crating\n";
+	print "IMAGE:\t\t$image\n";
+	print "SERIES NAME:\t$show\n";
+	print "EPISODE NAME:\t$episodename\n";
+	print "AIR DATE:\t$airdate\n";
+	print "GENRE:\t\t$genre\n";
+	print "SHORT DESC:\t$description\n";
+	print "DESC:\t\t$description\n";
+	print "TV NETWORK:\t$tvnetwork\n";
 	print "SEASON:\t\t$SeasonNumber\n";
 	print "EPISODE NUMBER:\t$EpisodeNumber\n";
 	print "EPISODE ID:\t$ProductionCode\n";
-	print "ACTORS:\t\t$Actors\n";
+	print "ACTORS:\t\t@actors\n";
 	print "GUEST ACTORS:\t$GuestStars\n";
-	print "DIRECTOR:\t$Director\n";
-	print "SCREENWRITER:\t$Writer\n";
+	print "DIRECTOR:\t$director\n";
+	print "SCREENWRITER:\t$writer\n";
+	print "COPYRIGHT:\t$copy Caleb\'s Own Work\n";
 	print "\n";
 	print "************************************\n";
 }
@@ -295,7 +306,6 @@ if ("$verbose" eq "yes") {
 #######################################################################################
 # Build actual tagging command
 #######################################################################################
-## Subler doesn't currently work
 if ("$use" eq "MP4Tagger") {
 	$command[0] = "$tagger";
 	$command[1] = "-i \"$file\""; 
@@ -323,30 +333,36 @@ if ("$use" eq "MP4Tagger") {
 	$command[18] = "--description \"$Description\"";
 	$command[19] = "--long_description \"$Description\"";
 	$command[20] = "--track_n \"$EpisodeNumber\"";
-## Cross platform but no 64bit support
 } elsif ("$use" eq "mp4v2") {
 	$command[0] = "$tagger";
 	$command[1] = "-show \"$show\"";
-	$command[2] = "-type \"$Type\"";
-	$command[3] = "-hdvideo $hdvid";
-	$command[4] = "-episodeid \"$EpisodeNumber\"";
-	$command[5] = "-episode \"$EpisodeNumber\"";
-	$command[6] = "-season \"$SeasonNumber\"";
-	$command[7] = "-network \"$TVNetwork\"";
+	$command[2] = "-type \"$type\"";
+	$command[3] = "-hdvideo \"$hdvid\"";
+	$command[4] = "-episodeid \"$episodenumber\"";
+	$command[5] = "-episode \"$episodenumber\"";
+	$command[6] = "-season \"$seasonnumber\"";
+	$command[7] = "-network \"$tvnetwork\"";
 	$command[8] ="-album \"$show\"";
-	$command[9] = "-genre \"$Genre\"";
-	$command[10] = "-year \"$AirDate\""; 
-	$command[11] = "-song \"$EpisodeName\"";
-	$command[12] = "-rating \"TV-G\"";
-	$command[13] = "-crating \"Clean\"";
-	$command[14] = "-description \"$Description\"";
-	$command[15] = "-longdesc \"$Description\"";
-	$command[16] = "-track \"$EpisodeNumber\"";
-	$command[17] = "\"$file\"";
+	$command[9] = "-genre \"$genre\"";
+	$command[10] = "-year \"$airdate\""; 
+	$command[11] = "-song \"$episodename\"";
+	$command[12] = "-rating \"$rated\"";
+	$command[13] = "-crating \"$crating\"";
+	$command[14] = "-description \"$description\"";
+	$command[15] = "-longdesc \"$description\"";
+	$command[16] = "-track \"$episodenumber\"";
+	$command[17] = "-cast \"@actors\"";
+	$command[18] = "-copywarning \"FBI ANTI-PIRACY WARNING: UNAUTHORIZED COPYING IS PUNISHABLE UNDER FEDERAL LAW.\"";
+	$command[19] = "-director \"$director\"";
+	$command[20] = "-artist \"@actors\"";
+	$command[21] = "-writer \"$writer\"";
+	$command[22] = "-swriter \"$writer\"";
+	$command[23] = "-copyright \"$copy $tvnetwork\"";
+	$command[24] = "\"$file\"";
 }
 
 
 #print Dumper(@command);
-system ("mp4art -o -q --add \"$BannerImage\" \"$file\"");
+system ("/usr/local/bin/mp4art -o -q --add \"$image\" \"$file\"");
 system("@command") == 0
 	or die "system @command failed: $?";

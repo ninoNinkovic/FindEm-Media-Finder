@@ -83,20 +83,29 @@ print colored ['green'], "\nFound the following files to convert:\n\n$list\n";
 # Loop through files found and convert to .m4v
 #######################################################################################
 
-foreach my $infile (@files) {
+foreach $infile (@files) {
     print colored ['red'], $infile . "\n"; 
-    my $infile_tmp = $infile;
+	$infile_tmp =  $infile;
     $infile_tmp =~ s/\'//g;
-    my $outfile = $infile_tmp;
+	move ($infile,$infile_tmp);
+	$infile = $infile_tmp;
+	#$infile =~ s/\(/\\(/g;
+    #$infile =~ s/\)/\\)/g;
+    $outfile = $infile;
     $outfile =~ s/\.(?:mkv|avi|mov|ts|mp4|iso)\z/\.m4v/;
     mkpath($outfile);
     rmdir $outfile;
-    move($infile,$infile_tmp);
-	my $base_in = basename "$infile_tmp";
+
+	my $base_in = basename "$infile";
 	my $base_out = basename "$outfile";
+	print "Base In: $base_in\n";
+	print "Base Out: $base_out\n";
+	#print "tmp file: $infile_tmp\n";
+	#system "/usr/local/bin/mkvdts2ac3 -w /Volumes/purple/Media/mkvdts2ac3_tmp/ -n -d -i -f '$infile'";
+#	exit;
 
 	## Get some info about the file
-	$file_info = new Mediainfo("filename" => "$infile_tmp");
+	$file_info = new Mediainfo("filename" => "$infile");
 	$audio = $file_info->{audio_format};
 
 if ("$debug" == "1") {
@@ -127,15 +136,17 @@ if ("$debug" == "1") {
 	print $file_info->{video_codec_profile}, "\n";
 	print $file_info->{video_format_profile}, "\n";
 }
-	sleep (2);
+	sleep (5);
 	
 	if ($audio eq dts) {
-		system "$mkvdts2ac3 -n -d -i '$infile_tmp'";
+		system "/usr/local/bin/mkvdts2ac3 -w /Volumes/purple/Media/mkvdts2ac3_tmp/ -n -d -i -f '$infile'";
+		#`/usr/local/bin/mkvdts2ac3 -w /Volumes/purple/Media/mkvdts2ac3_tmp/ -n -d -i -f --new '$infile'`;	
+		sleep (5);
 	} 
 	if ($infile =~ /\.(avi|iso)$/i) {
-	system "$handbrake -i '$infile_tmp' -o '$outfile' --preset=$preset";
+	system "$handbrake -i '$infile' -o '$outfile' --preset=$preset";
 	} else {
-	system "$subler -source '$infile_tmp' -dest '$outfile'";
+	system "$subler -itunesfriendly -64bitchunk -language English -source '$infile' -dest '$outfile'";
     }
 
 	if ($bc_enabled eq '1'){
@@ -176,7 +187,8 @@ if ("$debug" == "1") {
 		sleep (2);	
 		print colored ['blue'], "Moving and Copying files around... \n\n";
 		move ($outfile,$itunes) or die "Move to iTunes Failed: $!";
-		move ($infile_tmp,$archive) or die "Move to archive failed: $!";
+		move ($infile,$archive) or die "Move to archive failed: $!";
+		#move ($infile_tmp,$archive) or die "Move to archive failed: $!";
 			if ($bc_enabled eq '1'){
 				system "curl -d 'email=$bc_email' -d '&notification[from_screen_name]=Media+Procesor' -d '&notification[message]=$base_out has been added to iTunes.' http://boxcar.io/devices/providers/H04kjlc31sTQQE6vU7os/notifications";
 			}
@@ -208,7 +220,7 @@ if ("$debug" == "1") {
 		sleep (2);	
 		print colored ['blue'], "Moving and Copying files around... \n\n";
 		move ($outfile,$itunes) or die "Move to iTunes Failed: $!";
-		move ($infile_tmp,$archive) or die "Move to archive failed: $!";
+		move ($infile,$archive) or die "Move to archive failed: $!";
 			if ($bc_enabled eq '1'){
 				system "curl -d 'email=$bc_email' -d '&notification[from_screen_name]=Media+Procesor' -d '&notification[message]=$base_out has been added to iTunes.' http://boxcar.io/devices/providers/H04kjlc31sTQQE6vU7os/notifications";
 			}

@@ -21,8 +21,9 @@ use DBI;
 use Cwd;
 use Text::Trim;
 use Mediainfo;
+use XML::Simple;
+use JSON;
 
-require "/Users/caleb/Documents/git/FindEm-Media-Finder/common_config.pl";
 
 if ($#ARGV != 0) {
 	print "usage: movietag-couchpotato.pl <movie file>\n";
@@ -30,6 +31,8 @@ if ($#ARGV != 0) {
 }
 $location = dirname $0;
 $config = "$ENV{HOME}/.movietag/config";
+
+require "$location" . "/common_config.pl";
 #######################################################################################
 # READ IN CONFIG FILE FROM ~/.movietag/config
 #######################################################################################
@@ -112,7 +115,7 @@ if ($identifier) {
 	$imdbObj = new IMDB::Film(crit => "$movie") || print "UNKNOWN ERROR\n" ; 
 	}
 	if($@) {
-	                # Opsssss! We got an exception!
+	                # Ooopsssss! We got an exception!
 	                print "EXCEPTION: $@!";
 	                next;
 	        }
@@ -126,25 +129,84 @@ if ($identifier) {
 #        } else {
 #                print "Something wrong: ".$imdbObj->error;
 #        }
-$title = $imdbObj->title();
-$type = $imdbObj->kind();
-$year = $imdbObj->year();
-$companies = $imdbObj->company();
+#$title = $imdbObj->title();
+#$type = $imdbObj->kind();
+#$year = $imdbObj->year();
+#$companies = $imdbObj->company();
 $coverurl = $imdbObj->cover();
-@directors = @{ $imdbObj->directors() };
-@writers = @{ $imdbObj->writers() };
-@genres = @{ $imdbObj->genres() };
-$tagline = $imdbObj->tagline();
-$plot = $imdbObj->plot;
-$storyline = $imdbObj->storyline();
-$imdbrating = $imdbObj->rating();
-@cast = @{ $imdbObj->cast() };
-$duration = $imdbObj->duration();
+#@directors = @{ $imdbObj->directors() };
+#@writers = @{ $imdbObj->writers() };
+#@genres = @{ $imdbObj->genres() };
+#$tagline = $imdbObj->tagline();
+#$plot = $imdbObj->plot;
+#$storyline = $imdbObj->storyline();
+#$imdbrating = $imdbObj->rating();
+#@cast = @{ $imdbObj->cast() };
+#$duration = $imdbObj->duration();
 $mpaa = $imdbObj->mpaa_info();
-$full_plot = $imdbObj->full_plot();
-@ratings = split /\ /, $mpaa;
-$genre = $genres[0];
-$rated = $ratings[1];
+##$full_plot = $imdbObj->full_plot();
+#@ratings = split /\ /, $mpaa;
+#$genre = $genres[0];
+#$rated = $ratings[1];
+#
+#trim ( $title );
+#trim ( $type );
+#trim ( $year );
+#trim ( $genre );
+#trim ( $genres[0]);
+#
+#$type = ucfirst($type);
+
+#print "size of hash: " . keys( %writers ) . ".\n";
+#print "size of hash: " . keys( %directors ) . ".\n";
+#push @{$hash{1}}, $2 while $info =~ m/(\w\W\d\D):(\w\W\d\D)
+#$info =~ s/\"//g;
+#$info =~ s/\[//g;
+#$info =~ s/\]//g;
+
+#%infohash = split /[:,]\s*/, $info;
+
+#my $hash = from_json $info;
+$movie =~ s/\ /\+/g;
+
+if ($identifier) {
+$tu = "http://www.omdbapi.com/?i=$identifier&r=XML&tomatoes=true";
+} else {
+$tu = "http://www.omdbapi.com/?t=$movie&r=XML&tomatoes=true";
+}
+
+if ($identifier) {
+$url = "http://www.omdbapi.com/?i=$identifier&r=XML&tomatoes=true&plot=full";
+} else {
+$url = "http://www.omdbapi.com/?t=$movie&r=XML&tomatoes=true&plot=full";
+}
+#$url = "http://www.omdbapi.com/?i=$identifier&r=XML";
+
+$omdb = get $url;
+$to = get $tu;
+$tx = new XML::Simple;
+$td = $tx->XMLin("$to");
+$splot = $td->{movie}->{plot};
+
+$moviexml = new XML::Simple;
+$moviedata = $moviexml->XMLin("$omdb");
+
+$response = $moviedata->{response};
+$year = $moviedata->{movie}->{year};
+$imdbID = $moviedata->{movie}->{imdbID};
+$genres = $moviedata->{movie}->{genre};
+$director = $moviedata->{movie}->{director};
+$writer = $moviedata->{movie}->{writer};
+$plot = $moviedata->{movie}->{plot};
+$title = $moviedata->{movie}->{title};
+$type = $moviedata->{movie}->{type};
+$actors = $moviedata->{movie}->{actors};
+$rated = $moviedata->{movie}->{rated};
+$poster = $moviedata->{movie}->{poster};
+@genres = split /\,/, $genres;
+$genre = @genres[0];
+$production = $moviedata->{movie}->{Production};
+$copy = chr(169);
 
 trim ( $title );
 trim ( $type );
@@ -153,6 +215,15 @@ trim ( $genre );
 trim ( $genres[0]);
 
 $type = ucfirst($type);
+
+
+if ("$debug" == "1") {
+	#print "$response \n";
+	#print "$year \n";
+	print Dumper $moviedata;
+	#exit;
+}
+
 
 if ($rated eq '') {
 	$rated = 'Not Rated';
@@ -176,26 +247,27 @@ $file_info = new Mediainfo("filename" => "$file");
 $height = $file_info->{height};
 $width = $file_info->{width};
 
-if ( $height < 720 ) {
+if ( $height < 699 ) {
 	$hdvid = "0";
 }
-if ( $height > 719 ) {
+if ( $height > 700 ) {
 	$hdvid = "1";
 }
-if ( $height > 1079 ) {
+if ( $height > 999 ) {
 	$hdvid = "2";
 }
 
 if ($file_path eq '') {
-	($cover, $directories) = fileparse("$coverurl");
+	($cover, $directories) = fileparse("$poster");
 	@coverlist = split(/\(/, $cover);
-	$tmpfile = '/tmp/' . $coverlist[0];
+	$tmpfile = '/tmp/' . $poster;
 	$tmpfile =~ s/\s+$//;
 	
 	getstore ($coverurl, $tmpfile);
 	$file_path = $tmpfile;
 }
-
+#	print $file_path;
+#	exit 1;
 $full_plot =~ s/\"/\\"/g;
 $full_plot =~ s/\'/\\'/g;
 
@@ -233,6 +305,9 @@ if ( -e "$file_path" ) {
 #######################################################################################
 
 if ("$debug" == "1") {
+	if ($identifier eq ''){
+		$identifier = $imdbID;
+	}
 print "************************************\n";
 print "IMDB id: \t$identifier\n";
 print "Title: \t\t$title\n";
@@ -245,12 +320,13 @@ print "Width is: \t$width\n";
 print "HD Value is: \t$hdvid\n";
 print "Companies: \tjoin(", ", @companies)\n";
 print "Companies: \t$companies\n";
-print "Cover URL: \t$coverurl\n";
+print "Poster: \t$poster\n";
 print "Cover File: \t$file_path\n";
-print "Directors: \t@directors\n";
-print "Cast: \t\t$cast[0]\n";
-print "Writers: \t$writers[0]\n";
+print "Directors: \t$director\n";
+print "Cast: \t\t$actors\n";
+print "Writers: \t$writer\n";
 print "Plot: \t\t$plot\n";
+print "Short Plot: \t$splot\n";
 print "Full Plot: \t$full_plot\n";
 print "Storyline: \t$storyline\n";
 print "Duration: \t$duration\n";
@@ -258,32 +334,7 @@ print "Genre: \t\t$genre\n";
 print "Temp File: \t$tmpfile\n\n";
 print "************************************\n\n";
 
-print "************************************\n";
-print Dumper($directors);
-print "Testing: $directors{'id'}\n";
-print "************************************\n\n";
-print "************************************\n";
-use IMDB::Persons;
-
-        #
-        # Retrieve a person information by IMDB code
-        #
-        my $person = new IMDB::Persons(crit => '0868219');
-        if($person->status) {
-                print "Name: ".$person->name."\n";
-                print "Birth Date: ".$person->date_of_birth."\n\n";
-        }
-use JSON;
-use WebService::IMDBAPI;
-use WebService::IMDBAPI::Result;
-
-$imdbapi = WebService::IMDBAPI->new();
-$results = $imdbapi->search_by_id('$identifier');
-$result = $results[0];
-#print $results->title;
-#print $results->rated;
-print "************************************\n\n";
-
+exit 0;
 }
 
 #######################################################################################
@@ -322,7 +373,7 @@ if ("$verbose" eq "yes") {
 }
 
 if ($use eq "mp4v2") {
-	system ("/usr/local/bin/mp4art -o -q -z --add \"$file_path\" \"$file\"");
+	system "/usr/local/bin/mp4art -o -q --add \"$file_path\" \"$file\"";
 	if ($tmpfile) {
 	system ("rm $tmpfile");
 	}
@@ -362,17 +413,22 @@ if ("$use" eq "MP4Tagger") {
 	$command[0] = "$tagger";
 	$command[1] = "-album \"$title\"";	
 	$command[2] = "-type \"$type\"";	
-	$command[3] = "-hdvideo $hdvid";	
+	$command[3] = "-hdvideo \"$hdvid\"";	
 	$command[4] = "-comment \"$mpaa\"";
 	$command[5] = "-genre \"$genre\"";
 	$command[6] = "-year \"$year\"";
-	$command[7] = "-song \"$movie\"";
+	$command[7] = "-song \"$title\"";
 	$command[8] = "-rating \"$rated\"";
 	$command[9] = "-crating \"$crating\"";	
-	$command[10] = "-description \"$description\"";
-	$command[11] = "-longdesc \"$description\"";	
+	$command[10] = "-description \"$splot\"";
+	$command[11] = "-longdesc \"$plot\"";	
 	$command[12] = "-rannotation \"$mpaa\"";
-	$command[13] = "\"$file\"";
+	$command[13] = "-cast \"$actors\"";
+	$command[14] = "-director \"$director\"";
+	$command[15] = "-swriters \"$writer\"";
+	$command[16] = "-studio \"$production\"";
+	$command[17] = "-copyright \"$copy $production\"";
+	$command[18] = "\"$file\"";
 }
 
 
@@ -383,22 +439,24 @@ print "Type: $type\n";
 print "Year: $year\n";
 print "Rated: $rated\n";
 print "MPAA Rating: $mpaa\n";
-print "Companies: $companies\n";
-print "Cover URL: $coverurl\n";
+print "Companies: $production\n";
+print "Cover URL: $poster\n";
 print "Cover File: $file_path\n";
-print "Directors: @directors\n";
-print "Cast: $cast[0]\n";
-print "Writers: $writers[0]\n";
-print "Plot: $plot\n";
-print "Full Plot: $full_plot\n";
+print "Directors: $director\n";
+print "Cast: $actors\n";
+print "Writers: $writer\n";
+print "Plot: $splot\n";
+print "Full Plot: $plot\n";
 print "Storyline: $storyline\n";
 print "Duration: $duration\n";
-print "Genres: $genres[0]\n";
+print "Genres: $genre\n";
 print "Genre: $genre\n";
 print "Temp File: $tmpfile\n";
 print "\$use = $use\n\n";
 print Dumper(@command);
+print "===========================================\n\n\n";
 close (STDOUT);
 
 system("@command") == 0
 	or die "system @command failed: $?";
+exit 0;
