@@ -85,7 +85,7 @@ This would search both the TV directory and the Movies directory.  Using the cro
 	
 ##More information:
 
-**mp4v2 (patched)** - The vanilla mp4v2 project does not yet include the ability to add mpaa ratings to movies (G, PG-13, R, etc).  So mp4v2 was recompiled using a user submitted patch and now that functionality is there.  I've included a copy of mp4v2 2.0.0 that's been patched.  All that's need is to compile this on your system.  
+**mp4v2 (patched)** - The vanilla mp4v2 project does not yet include the ability to add mpaa ratings to movies (G, PG-13, R, etc).  So mp4v2 was recompiled using a user submitted patch and now that functionality is there.  I've included a copy of mp4v2 2.0.0 that's been patched.  All that's needed is to compile this on your system.  
 
 ###Credits:  
 
