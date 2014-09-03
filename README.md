@@ -87,6 +87,6 @@ This would search both the TV directory and the Movies directory.  Using the cro
 
 ###Credits:  
 
-ffmpeg - [http://ffmpeg.org/](http://ffmpeg.org)
+ffmpeg - [http://ffmpeg.org/](http://ffmpeg.org)  
 mp4v2 - [https://code.google.com/p/mp4v2/](https://code.google.com/p/mp4v2/)  
 
