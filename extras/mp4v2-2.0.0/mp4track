@@ -104,7 +104,7 @@ else
 
   if test -f "$progdir/$program"; then
     # Add our own library path to DYLD_LIBRARY_PATH
-    DYLD_LIBRARY_PATH="/Users/caleb/Documents/git/FindEm-Media-Finder/extras/mp4v2-2.0.0/.libs:$DYLD_LIBRARY_PATH"
+    DYLD_LIBRARY_PATH="/Volumes/purple/Documents/git/FindEm-Media-Finder/extras/mp4v2-2.0.0/.libs:$DYLD_LIBRARY_PATH"
 
     # Some systems cannot cope with colon-terminated DYLD_LIBRARY_PATH
     # The second colon is a workaround for a bug in BeOS R4 sed

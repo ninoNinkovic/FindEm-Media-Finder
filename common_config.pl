@@ -13,6 +13,7 @@ sub findem_config($) {
 	my $subler;
 	my $tvtag;
 	my $movietag;
+	
 	my $archive;
 	my $bc_enabled;
 	my $bc_email;
@@ -50,7 +51,7 @@ sub findem_config($) {
 	if ($itunes eq '') {
 		$itunes = '/Volumes/Media/iTunes/iTunes Media/Automatically Add to iTunes';
 	}
-
+	
 	print "Define TV Tag script: [$ENV{HOME}/svn/FindEm-Media-Finder/tvtag-sickbeard.pl (default)]: ";
 	chomp ($tvtag = <STDIN>);
 	if ($tvtag eq '') {
@@ -141,6 +142,7 @@ $preset =~ s/\ /\\ /g;
 	print FILE "\$itunes = \"$itunes\/\"\;\n";
 	#print FILE "\$itunes_tmp = \'$itunes_tmp\'\;\n";
 	print FILE "\$tvtag = \"$tvtag\"\;\n";
+	print FILE "\$tvpvr = \"$tvpvr\"\;\n";
 	print FILE "\$movietag = \"$movietag\"\;\n";
 	print FILE "\$archive = \"$archive\"\;\n";
 	#print FILE "\$ripped = \"$ripped\"\;\n";
@@ -235,6 +237,7 @@ sub tv_config($) {
 	my $verbose = '';
 	my $use = '';
 	my $tagger = '';
+	my $tvpvr = '';
 	my $cache = '';
 	my $sickbeard = '';
 	
@@ -268,6 +271,12 @@ sub tv_config($) {
 	#if ($TVDBAPIKEY eq "") {
 	#	$TVDBAPIKEY = 'F3EE3AE655C54A95';
 	#}
+	
+	print "Define TV PVR (Sickbeard or NZBDrone)[NZBDrone (default)]: ";
+	chomp ($tvpvr = <STDIN>);
+	if ($tvpvr eq '') {
+		$tvpvr = 'NZBDrone';
+	}
 
 	print "Define Image cache location: [$ENV{HOME}/.cache] ";
 	chomp ($cache = <STDIN>);

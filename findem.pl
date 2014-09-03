@@ -12,7 +12,9 @@ use Term::ANSIScreen qw/:color /;
 use Growl::GNTP;
 use Mediainfo;
 
-require "/Users/caleb/Documents/git/FindEm-Media-Finder/common_config.pl";
+$location = dirname $0;
+require "$location" . "/common_config.pl";
+# require "/Users/caleb/Documents/git/FindEm-Media-Finder/common_config.pl";
 
 my $config = "$ENV{HOME}/.findem/config";
 print colored ['blue'], "Welcome to the greatest script in the world!\n";
@@ -65,7 +67,7 @@ if ($g_enabled eq '1'){
 #######################################################################################
 my @files = find(
 	file =>
-	name => [qw/ *.mkv *.avi *.mov *.ts *.mp4 *.iso / ],
+	name => [qw/ *.mkv *.avi *.mov *.wmv *.ts *.mp4 *.iso / ],
 	in => \@ARGV
 	);
 
@@ -86,13 +88,16 @@ print colored ['green'], "\nFound the following files to convert:\n\n$list\n";
 foreach $infile (@files) {
     print colored ['red'], $infile . "\n"; 
 	$infile_tmp =  $infile;
-    $infile_tmp =~ s/\'//g;
-	move ($infile,$infile_tmp);
+    $infile_tmp =~ s/\'/\\'/g;
+	# $infile_tmp =~ s/\ /\\ /g;
+	# $infile_tmp =~ s/\(/\\(/g;
+	# $infile_tmp =~ s/\)/\\)/g;
+	# move ($infile,$infile_tmp);
 	$infile = $infile_tmp;
 	#$infile =~ s/\(/\\(/g;
     #$infile =~ s/\)/\\)/g;
     $outfile = $infile;
-    $outfile =~ s/\.(?:mkv|avi|mov|ts|mp4|iso)\z/\.m4v/;
+    $outfile =~ s/\.(?:mkv|avi|wmv|mov|ts|mp4|iso)\z/\.m4v/;
     mkpath($outfile);
     rmdir $outfile;
 
@@ -138,15 +143,18 @@ if ("$debug" == "1") {
 }
 	sleep (5);
 	
-	if ($audio eq dts) {
-		system "/usr/local/bin/mkvdts2ac3 -w /Volumes/purple/Media/mkvdts2ac3_tmp/ -n -d -i -f '$infile'";
-		#`/usr/local/bin/mkvdts2ac3 -w /Volumes/purple/Media/mkvdts2ac3_tmp/ -n -d -i -f --new '$infile'`;	
-		sleep (5);
-	} 
-	if ($infile =~ /\.(avi|iso)$/i) {
-	system "$handbrake -i '$infile' -o '$outfile' --preset=$preset";
+	# if ($audio eq dts) {
+# 		system "/usr/local/bin/mkvdts2ac3 -w /Volumes/purple/Media/mkvdts2ac3_tmp/ -n -d -i -f '$infile'";
+# 		#`/usr/local/bin/mkvdts2ac3 -w /Volumes/purple/Media/mkvdts2ac3_tmp/ -n -d -i -f --new '$infile'`;
+# 		sleep (5);
+# 	}
+	if ($infile =~ /\.(iso)$/i) {
+		system "$handbrake -i '$infile' -o '$outfile' --preset=$preset";	
+	} elsif ($infile =~ /\.(wmv)$/i) {
+		system "$ffmpeg -i '$infile' -map 0:0 -c:v libx264 -crf 23 -profile:v high -r 30 -metadata:s:v language=eng -metadata:s:v title='Video Track' -map 0:1 -c:a:0 ac3 -ab:a:0 448k -ac:a:0 6 -ar:a:0 48000 -metadata:s:a:0 language=eng -metadata:s:a:0 title='Audio Track' -movflags faststart -f mp4 -y '$outfile'";
 	} else {
-	system "$subler -itunesfriendly -64bitchunk -language English -source '$infile' -dest '$outfile'";
+		system "$ffmpeg -i '$infile' -map 0:0 -vcodec copy -metadata:s:v language=eng -metadata:s:v title='Video Track' -map 0:1 -codec:a:0 ac3 -ab:a:0 448k -ac:a:0 6 -ar:a:0 48000 -metadata:s:a:0 language=eng -metadata:s:a:0 title='Audio Track' -movflags faststart -f mp4 -y '$outfile'";
+	# system "$subler -itunesfriendly -64bitchunk -language English -source '$infile' -dest '$outfile'";
     }
 
 	if ($bc_enabled eq '1'){
@@ -187,7 +195,7 @@ if ("$debug" == "1") {
 		sleep (2);	
 		print colored ['blue'], "Moving and Copying files around... \n\n";
 		move ($outfile,$itunes) or die "Move to iTunes Failed: $!";
-		move ($infile,$archive) or die "Move to archive failed: $!";
+		move ($infile,$archive) or die "Move to archive failed: $!";		
 		#move ($infile_tmp,$archive) or die "Move to archive failed: $!";
 			if ($bc_enabled eq '1'){
 				system "curl -d 'email=$bc_email' -d '&notification[from_screen_name]=Media+Procesor' -d '&notification[message]=$base_out has been added to iTunes.' http://boxcar.io/devices/providers/H04kjlc31sTQQE6vU7os/notifications";
