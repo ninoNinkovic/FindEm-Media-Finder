@@ -2,11 +2,11 @@
 
 FindEm-Media-Finder is a perl script that will recursively look through directories passed to it for any .mkv, .avi, .mov, .ts, .mp4, or .iso files and rip them to be .m4v files.  It will then pass the resulting file to the tagging script based on if it's a TV Show or a Movie.  It determines the type based on the name.  TV Shows are assumed to be named `<ShowName> - <Season>x<Episode>.ext` (e.g. Homeland - 2x02.mkv).  Movies are assumed to be named `<Movie Name>(year).ext` (e.g. World War Z(2013).mkv).  Couchpotato, Sickbeard, and imdb are all used for tagging the metadata.
 
-SublerCLI, HandbrakeCLI, MP4Tagger, Atomic Parsley, and mp4v2 (patched) are all used for various functions.  SublerCLI is used where possible to repackage the files in to an .m4v due to it's ability to do it very quickly.  However, there are a few known instances where it is unable to.  Right now, those are .avi files and .iso images.  Those are still being handled by Handbrake.
+ffmpeg and mp4v2 (patched) are used for various functions.  
 
 **findem.pl** - The main workhorse that will do the finding and/or converting of files then pass to one of the tagging scripts.  
-**tvtag-sickbeard.pl** - Used to tag TV Shows using the Sickbeard database.  
-**movietag-couchpotato.pl** - Used to tag Movies using the Couchpotato database as well as imdb.  
+**tvtag.pl** - Used to tag TV Shows using the Sickbeard database.  
+**movietag.pl** - Used to tag Movies using the Couchpotato database as well as imdb.  
 **tagger.pl** - Used to tag either file type, currently using for tagging one-offs.  
 **runtime_wrapper** - A wrapper for findem.pl that will only allow one instance of the script to be running at a time.  
 
@@ -33,17 +33,15 @@ Mediainfo
 
 ###Applications:
 mp4v2 (patched)  
-AtomicParsley  
-MP4Tagger  
-HandBrakeCLI  
-SublerCLI  
-mkvdts2ac3
+ffmpeg
 
 ##Usage:
 
 	./findem.pl <directory> [<directory>]
 
 ##Setup:
+
+**MOST OF THE BELOW NEEDS TO BE UPDATED AS IT'S NO LONGER USED**
 
 On the first run of findem.pl, a config file will be built based on a few questions and stored at ~/.findem/config.  Those questions are:  
    1. Location of HandBrakeCLI? - This is the location of the HandbrakeCLI binary on your system.  
@@ -58,14 +56,14 @@ On the first run of findem.pl, a config file will be built based on a few questi
 	
 Now that the config is built it will re-run, searching for media files in the directories you specified.  It will build a list of files it has found and begin to process those files one by one.  Processing those files consists of ripping to .m4v format, then passing the ripped file to the tagging script.  The first time each tagging script run, it will also build a config file located ~/.movietag/config or ~/.tvtag/config.  It will ask the following questions to build each tagging config file:  
 
-**tvtag-sickbeard.pl:**  
+**tvtag.pl:**  
    1. Do you want verbose tagging? - Spits out some extra tagging information, largely non-useful besides when troubleshooting tagging problems.  
    2. Define Tagger to use - Options are MP4Tagger, AtomicParsley, or mp4v2.  Right now, all work fine besides mp4v2, which is being added and expected to be functional shortly.  
    3. Define Location of the Tagger binary -  Location to the binary on your system of the tagger you are using.  
    4. Define Image cache location - Temporary location to write coverart files out to.  
    5. Define Sickbeard directory - This is the location of your Sickbeard install directory.  The location of your sickbeard.db is based off this directory.  
 	
-**movietag-couchpotato.pl**  
+**movietag.pl**  
    1. Do you want verbose tagging? - Spits out some extra tagging information, largely non-useful besides when troubleshooting tagging problems.  
    2. Define Tagger to use - Options are MP4Tagger, AtomicParsley, or mp4v2.  Right now, only mp4v2 is currently working.  MP4Tagger is using tmdb 2.1 api which has been deprecated.  
    3. Define Location of the Tagger binary -  Location to the binary on your system of the tagger you are using.  
@@ -89,10 +87,6 @@ This would search both the TV directory and the Movies directory.  Using the cro
 
 ###Credits:  
 
-HandBrake - [http://handbrake.fr](http://handbrake.fr)  
-Subler - [http://code.google.com/p/subler/](http://code.google.com/p/subler/)  
+ffmpeg - [http://ffmpeg.org/](http://ffmpeg.org)
 mp4v2 - [https://code.google.com/p/mp4v2/](https://code.google.com/p/mp4v2/)  
-AtomicParsley - [http://atomicparsley.sourceforge.net](http://atomicparsley.sourceforge.net)  
-MP4Tagger - [https://github.com/ccjensen/MP4Tagger](https://github.com/ccjensen/MP4Tagger)  
-mkvdts2ac3 - [https://github.com/JakeWharton/mkvdts2ac3](https://github.com/JakeWharton/mkvdts2ac3)  
 
